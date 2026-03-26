@@ -63,6 +63,37 @@ Key usage patterns:
 - If auth fails, run `gws auth login` to re-authenticate
 - Setup guide for team members: `/Users/haberlah/Documents/bella_assist/claude_gws-cli_setup.md`
 
+### Google Workspace safety rules — MANDATORY
+
+**Read-only operations** (list, get, search) can run freely without asking.
+
+**Any operation that creates, modifies, sends, moves, or deletes data** in Google Workspace requires **explicit user approval BEFORE execution**. This includes but is not limited to:
+- Sending or drafting emails (Gmail)
+- Creating, editing, or deleting files (Drive, Docs, Sheets, Slides)
+- Moving or renaming files/folders (Drive)
+- Creating, updating, or deleting calendar events
+- Sending Chat messages
+- Modifying contacts
+- Editing form content
+- Updating task status
+- Any `create`, `update`, `patch`, `delete`, `send`, `trash`, `move`, `copy` operation
+
+**Approval format** — always present the action like this before running:
+
+```
+I'm about to perform the following action:
+
+ACTION: DELETE FILE "quarterly-report.docx" FROM SHARED DRIVE
+Target: [file ID or name]
+Account: david@bellamed.ai
+
+Proceed? (yes/no)
+```
+
+The ACTION line must always be in ALL CAPS and clearly describe what will happen. Never combine multiple write operations into a single approval — ask for each one separately.
+
+**Never** run a destructive gws command speculatively, in background agents, or as part of a batch without individual approval for each write action.
+
 ## Data Science Projects
 
 These are default preferences for new projects — override in project-level CLAUDE.md files as needed.
