@@ -1,6 +1,6 @@
 ---
 name: gws-drive-backup
-description: Download and back up Google Drive files locally via the gws CLI with format conversion. Google Docs to Markdown (plus DOCX if images detected), Google Sheets to CSV per tab plus XLSX, Google Slides to PPTX, all other files as-is. Supports personal Drive, shared drives, and folder structures. Use when (1) user asks to back up, download, copy, sync, or mirror Google Drive files locally, (2) user asks to export Google Docs, Sheets, or Slides to local formats, (3) user wants offline access to Drive content, (4) user mentions drive backup, download from Drive, export Drive, or copy Drive files.
+description: Download and back up Google Drive files locally via the gws CLI with format conversion and AI-readable output. Google Docs to Markdown (with image extraction), Google Sheets to CSV per tab plus XLSX, Google Slides to PPTX. Also converts downloaded .docx to Markdown and .xlsx to CSV per tab for AI readability. Supports personal Drive, shared drives, and folder structures. Use when (1) user asks to back up, download, copy, sync, or mirror Google Drive files locally, (2) user asks to export or convert Google Docs, Sheets, Slides, .docx, or .xlsx to AI-readable formats, (3) user wants offline access to Drive content, (4) user mentions drive backup, download from Drive, export Drive, or copy Drive files.
 ---
 
 # GWS Drive Backup
@@ -9,64 +9,65 @@ description: Download and back up Google Drive files locally via the gws CLI wit
 
 - `gws` CLI installed and authenticated (`gws auth login`)
 - `jq` on PATH
-- Python 3 on PATH (for image extraction — uses only standard library: `re`, `base64`, `sys`, `os`)
+- Python 3 on PATH (standard library only for `extract_images.py`)
+- `pandoc` on PATH (for .docx → .md conversion). Install: `brew install pandoc`
+- `openpyxl` Python package (for .xlsx → .csv conversion). Install: `pip3 install openpyxl`
 
 Verify: `gws drive files list --params '{"pageSize": 1}'`
 
-## Automated backup
+## Two-phase workflow
 
-Run `scripts/gws_backup.sh`:
+### Phase 1 — Download from Drive (`gws_backup.sh`)
+
+Downloads files from Google Drive with Google-native format conversion:
 
 ```bash
 bash <skill_dir>/scripts/gws_backup.sh <output_dir> [--scope personal|shared|all] [--drive-id <id>]
 ```
 
+| Source type | Downloaded as |
+|------------|---------------|
+| Google Docs | `.md` (with base64 images extracted to `images/` + `.docx` if images found) |
+| Google Sheets | subfolder: `.csv` per tab + `.xlsx` |
+| Google Slides | `.pptx` |
+| Google Forms | skipped (not exportable) |
+| Other files | as-is (PDF, DOCX, XLSX, ZIP, etc.) |
+
+### Phase 2 — Convert local files (`convert_local.py`)
+
+Converts downloaded binary files to AI-readable formats:
+
 ```bash
-bash <skill_dir>/scripts/gws_backup.sh ./my_drive                                          # personal
-bash <skill_dir>/scripts/gws_backup.sh ./shared --scope shared --drive-id 0ANNP52NXM_4zUk9PVA  # one shared drive
-bash <skill_dir>/scripts/gws_backup.sh ./everything --scope all                             # all drives
+python3 <skill_dir>/scripts/convert_local.py <directory>
 ```
 
-## Conversion rules
+| Source type | Converted to |
+|------------|-------------|
+| `.docx` | `.md` via pandoc (images extracted to `images/` subfolder) |
+| `.xlsx` | subfolder with `.csv` per sheet tab via openpyxl |
 
-| Source | Output | Notes |
-|--------|--------|-------|
-| Google Docs | `.md` | If images detected, also exports `.docx` (images embedded) |
-| Google Sheets | subfolder: `.csv` per tab + `.xlsx` | Tab names become CSV filenames |
-| Google Slides | `.pptx` | |
-| Google Forms | skipped | Not exportable via API |
-| Other (PDF, DOCX, ZIP, etc.) | as-is | Original filename preserved |
+The script is idempotent — it skips files that already have conversions (e.g. a `.docx` where a `.md` with the same basename exists).
 
-## Image handling in Google Docs
+**Run Phase 2 after Phase 1** to ensure all content is available as plaintext for AI processing.
 
-Google's markdown export embeds images as **base64 data URIs** in reference-style links at the end of the file:
+## Image handling
 
-```markdown
-![][image1]        ← placeholder in document body
-[image1]: <data:image/png;base64,iVBOR...>  ← base64 blob at end
-```
+### Google Docs (Phase 1)
 
-These blobs make the markdown huge and unreadable. The skill handles this in two steps:
-
-**Step 1 — Extract images to files** (`scripts/extract_images.py`):
+Google's markdown export embeds images as base64 data URIs. The `extract_images.py` script decodes each to a separate file in `images/` and rewrites the markdown with local paths:
 
 ```bash
 python3 <skill_dir>/scripts/extract_images.py <markdown_file>
 ```
 
-This rewrites the markdown in-place, replacing data URIs with local paths:
+Before: `[image1]: <data:image/png;base64,iVBOR...>` (huge base64 blob)
+After: `[image1]: images/image1.png` (clean local reference)
 
-```markdown
-[image1]: images/image1.png
-```
+If images are found, the backup script also exports a `.docx` copy as a backup.
 
-And saves each image as a separate file in `images/` next to the markdown.
+### Uploaded .docx files (Phase 2)
 
-**Step 2 — Also export as .docx** (automatic in backup script):
-
-If images were extracted, the script also exports a `.docx` copy as a belt-and-suspenders backup — docx natively embeds images.
-
-The backup script runs both steps automatically for every Google Doc.
+Pandoc extracts embedded images to `images/media/` and references them in the markdown output automatically.
 
 ## Manual export commands
 
@@ -76,7 +77,7 @@ The backup script runs both steps automatically for every Google Doc.
 # Personal
 gws drive files list --params '{"q": "'\''me'\'' in owners and trashed = false", "pageSize": 100, "fields": "files(id,name,mimeType,parents)"}'
 
-# Shared drives (requires all three extra params)
+# Shared drives
 gws drive files list --params '{"q": "trashed = false", "includeItemsFromAllDrives": true, "supportsAllDrives": true, "corpora": "allDrives", "pageSize": 100}'
 
 # List shared drives
@@ -93,14 +94,11 @@ mv download.bin "filename.md"
 ### Google Sheets → CSV + XLSX
 
 ```bash
-# Full workbook
 gws drive files export --params '{"fileId": "ID", "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}'
 mv download.xml "sheet.xlsx"
 
-# Tab names
 gws sheets spreadsheets get --params '{"spreadsheetId": "ID"}' | jq -r '.sheets[].properties.title'
 
-# Single tab as CSV
 gws sheets spreadsheets values get --params '{"spreadsheetId": "ID", "range": "TAB"}' | jq -r '.values[] | @csv' > "tab.csv"
 ```
 
@@ -111,7 +109,7 @@ gws drive files export --params '{"fileId": "ID", "mimeType": "application/vnd.o
 mv download.xml "slides.pptx"
 ```
 
-### Binary files (PDF, DOCX, ZIP, etc.)
+### Binary files
 
 ```bash
 gws drive files get --params '{"fileId": "ID", "alt": "media"}'
