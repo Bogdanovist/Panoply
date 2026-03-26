@@ -9,6 +9,7 @@ description: Download and back up Google Drive files locally via the gws CLI wit
 
 - `gws` CLI installed and authenticated (`gws auth login`)
 - `jq` on PATH
+- Python 3 on PATH (for image extraction — uses only standard library: `re`, `base64`, `sys`, `os`)
 
 Verify: `gws drive files list --params '{"pageSize": 1}'`
 
