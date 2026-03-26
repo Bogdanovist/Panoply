@@ -69,6 +69,22 @@ If images are found, the backup script also exports a `.docx` copy as a backup.
 
 Pandoc extracts embedded images to `images/media/` and references them in the markdown output automatically.
 
+### Phase 3 — Verify backup (`verify_backup.sh`)
+
+Checks the backup is complete and consistent:
+
+```bash
+bash <skill_dir>/scripts/verify_backup.sh <directory>
+```
+
+Verifies:
+- Every `.docx` has a corresponding `.md`
+- Every standalone `.xlsx` has a CSV subdirectory
+- No zero-byte files (warns if found — may be empty sheets, not errors)
+- Reports file counts by type and total size
+
+**Run Phase 3 after Phase 2** to confirm nothing was missed.
+
 ## Manual export commands
 
 ### List files
