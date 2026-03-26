@@ -41,6 +41,28 @@ Always try multiple tools before reporting failure. Run search and browsing in p
 
 Changes are automatically committed and pushed to GitHub by a Stop hook after each response. Do NOT ask about version control — it is handled automatically.
 
+## Google Workspace access
+
+The `gws` CLI (Google Workspace CLI) is installed globally and authenticated as `david@bellamed.ai`. Use it via Bash to access Google Workspace services:
+
+- **Google Drive**: `gws drive files list`, create folders, move/copy/delete files
+- **Gmail**: `gws gmail users messages list` (also available via MCP Gmail tools)
+- **Google Sheets**: `gws sheets spreadsheets get`, create/edit spreadsheets
+- **Google Docs**: `gws docs documents get`, create/edit documents
+- **Google Slides**: `gws slides presentations get`, create/edit presentations
+- **Google Calendar**: `gws calendar events list` (also available via MCP Calendar tools)
+- **Google Tasks**: `gws tasks tasklists list`
+- **Google Forms**: `gws forms forms get`
+- **Contacts**: `gws people people connections list`
+- **Google Chat**: `gws chat spaces list`
+
+Key usage patterns:
+- Always pass parameters as JSON: `--params '{"pageSize": 5}'`
+- For shared drives, add: `"includeItemsFromAllDrives": true, "supportsAllDrives": true, "corpora": "allDrives"`
+- Credentials are at `~/.config/gws/credentials.enc` (encrypted)
+- If auth fails, run `gws auth login` to re-authenticate
+- Setup guide for team members: `/Users/haberlah/Documents/bella_assist/claude_gws-cli_setup.md`
+
 ## Data Science Projects
 
 These are default preferences for new projects — override in project-level CLAUDE.md files as needed.
