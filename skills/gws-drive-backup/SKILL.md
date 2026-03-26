@@ -38,21 +38,34 @@ bash <skill_dir>/scripts/gws_backup.sh ./everything --scope all                 
 
 ## Image handling in Google Docs
 
-Google's markdown export **silently drops all images** — no placeholders, no broken links. Content appears complete but images are simply absent.
+Google's markdown export embeds images as **base64 data URIs** in reference-style links at the end of the file:
 
-Detection: query the Docs API for `inlineObjects`:
-
-```bash
-gws docs documents get --params '{"documentId": "DOC_ID"}' | jq '.inlineObjects | length'
+```markdown
+![][image1]        ← placeholder in document body
+[image1]: <data:image/png;base64,iVBOR...>  ← base64 blob at end
 ```
 
-If count > 0, also export as `.docx` which preserves embedded images:
+These blobs make the markdown huge and unreadable. The skill handles this in two steps:
+
+**Step 1 — Extract images to files** (`scripts/extract_images.py`):
 
 ```bash
-gws drive files export --params '{"fileId": "DOC_ID", "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}'
+python3 <skill_dir>/scripts/extract_images.py <markdown_file>
 ```
 
-The backup script does this automatically.
+This rewrites the markdown in-place, replacing data URIs with local paths:
+
+```markdown
+[image1]: images/image1.png
+```
+
+And saves each image as a separate file in `images/` next to the markdown.
+
+**Step 2 — Also export as .docx** (automatic in backup script):
+
+If images were extracted, the script also exports a `.docx` copy as a belt-and-suspenders backup — docx natively embeds images.
+
+The backup script runs both steps automatically for every Google Doc.
 
 ## Manual export commands
 

@@ -12,6 +12,7 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 OUTPUT_DIR="${1:?Usage: gws_backup.sh <output_dir> [--scope personal|shared|all] [--drive-id <id>]}"
 SCOPE="personal"
 DRIVE_ID=""
@@ -83,12 +84,12 @@ echo "$FILES_JSON" | jq -c '.files[]' | while IFS= read -r file; do
       [ -f download.bin ] && mv download.bin "${SAFE_NAME}.md"
       echo "  → ${SAFE_NAME}.md"
 
-      # Check for inline images via Docs API
-      IMG_COUNT=$(gws docs documents get --params "{\"documentId\": \"$ID\"}" 2>/dev/null \
-        | jq '.inlineObjects | length // 0' 2>/dev/null || echo 0)
+      # Extract base64 images from markdown to separate files + rewrite paths
+      python3 "$SCRIPT_DIR/extract_images.py" "${OUTPUT_DIR}/${SAFE_NAME}.md" 2>/dev/null || true
 
-      if [ "$IMG_COUNT" -gt 0 ]; then
-        echo "  ⚠ $IMG_COUNT image(s) detected — also exporting as .docx (images are embedded)"
+      # Also export as .docx if images were found (docx embeds images natively)
+      if [ -d "${OUTPUT_DIR}/images" ] && [ "$(ls -A "${OUTPUT_DIR}/images" 2>/dev/null)" ]; then
+        echo "  Images found — also exporting as .docx"
         gws drive files export --params "{\"fileId\": \"$ID\", \"mimeType\": \"application/vnd.openxmlformats-officedocument.wordprocessingml.document\"}" >/dev/null 2>&1
         local_file=$(ls -t download.* 2>/dev/null | head -1)
         [ -n "$local_file" ] && mv "$local_file" "${SAFE_NAME}.docx"
