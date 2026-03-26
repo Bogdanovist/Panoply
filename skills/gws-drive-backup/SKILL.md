@@ -15,7 +15,17 @@ description: Download and back up Google Drive files locally via the gws CLI wit
 
 Verify: `gws drive files list --params '{"pageSize": 1}'`
 
-## Two-phase workflow
+## Five-phase workflow
+
+### Phase 0 — Export Drive metadata
+
+Extract metadata for all files before downloading. This provides google_doc_id, modification times, and author info needed for YAML frontmatter.
+
+```bash
+gws drive files list --params '{"q": "trashed = false", "includeItemsFromAllDrives": true, "supportsAllDrives": true, "corpora": "allDrives", "pageSize": 500, "fields": "files(id,name,mimeType,modifiedTime,createdTime,lastModifyingUser,webViewLink,parents,size)"}'
+```
+
+Save output as `drive_metadata.json` in the backup root directory. This file is used by Phase 4 to inject frontmatter.
 
 ### Phase 1 — Download from Drive (`gws_backup.sh`)
 
@@ -84,6 +94,20 @@ Verifies:
 - Reports file counts by type and total size
 
 **Run Phase 3 after Phase 2** to confirm nothing was missed.
+
+### Phase 4 — Build knowledge base (optional)
+
+Creates a filtered, AI-optimised copy containing only token-efficient formats (.md, .csv, .pdf, referenced .png) with YAML frontmatter on every .md and a master `index.json`.
+
+Requires `drive_metadata.json` from Phase 0.
+
+The output directory is structured by topic (architecture, strategy, co-design, etc.) rather than mirroring the Drive folder layout. Each .md file gets YAML frontmatter with:
+- `title`, `google_doc_id`, `google_doc_url` (from Drive metadata)
+- `last_modified`, `last_modified_by` (from Drive metadata)
+- `category`, `tags`, `doc_type` (derived from repo path and filename)
+- `word_count`, `has_images`, `sensitivity` (computed locally)
+
+Includes a `CLAUDE.md` navigation guide and `index.json` catalogue for programmatic access.
 
 ## Manual export commands
 
