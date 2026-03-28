@@ -133,9 +133,13 @@ echo "$FILES_JSON" | jq -c '.files[]' | while IFS= read -r file; do
       echo "  → ${SAFE_NAME}.pptx"
       ;;
 
-    # ── Skip non-exportable types ──
+    # ── Recurse into folders ──
     application/vnd.google-apps.folder)
-      echo "FOLDER: $NAME (skipped)"
+      SAFE_FOLDER=$(sanitise "$NAME")
+      echo "FOLDER: $NAME"
+      echo "  → recursing into $SAFE_FOLDER/"
+      mkdir -p "${OUTPUT_DIR}/${SAFE_FOLDER}"
+      bash "$0" "${OUTPUT_DIR}/${SAFE_FOLDER}" --scope shared --drive-id "$ID" 2>/dev/null || true
       ;;
     application/vnd.google-apps.form)
       echo "FORM: $NAME (skipped — not exportable)"

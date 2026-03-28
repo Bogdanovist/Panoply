@@ -244,22 +244,52 @@ def get_source_drive(rel_path):
     return 'product'
 
 def get_tags(filename, category):
-    """Generate tags from filename and category."""
-    tags = []
-    if category:
-        tags.append(category.split('/')[0])
+    """Generate cross-cutting research tags from filename and category."""
+    tags = set()
     fn = filename.lower()
-    tag_patterns = {
-        'ndis': 'ndis', 'mvp': 'mvp', 'architecture': 'architecture',
-        'co-design': 'co-design', 'empathy': 'empathy-map',
-        'stage1': 'stage1-discovery', 'stage2': 'stage2-validation',
-        'ontology': 'ontology', 'iso': 'iso-27001', 'consent': 'consent',
-        'testing': 'testing', 'gtm': 'gtm', 'strategy': 'strategy',
-    }
-    for pat, tag in tag_patterns.items():
-        if pat in fn and tag not in tags:
-            tags.append(tag)
-    return tags
+    cat = (category or '').lower()
+
+    # Research methodology
+    if 'empathy' in fn: tags.add('empathy-map')
+    if 'persona' in fn or 'comparison' in fn: tags.add('persona')
+    if 'transcript' in fn: tags.add('transcript')
+    if 'summary' in fn or 'executive_summary' in fn: tags.add('summary')
+    if 'interview' in fn: tags.add('interview')
+    if 'golden_metrics' in fn or 'quote' in fn: tags.add('quotes')
+    if 'kano' in fn: tags.add('kano-analysis')
+    if 'think_aloud' in fn or 'think-aloud' in fn: tags.add('think-aloud')
+    if 'day_in_the_life' in fn or 'ditl' in fn: tags.add('day-in-life')
+    if 'feature_validation' in fn or 'stage_2' in fn or 'stage2' in fn: tags.add('feature-validation')
+    if 'pain' in fn or 'frequency' in fn: tags.add('pain-analysis')
+
+    # Content type
+    if 'canvas' in fn or 'lean_canvas' in fn: tags.add('canvas')
+    if 'briefing' in fn or 'brief' in fn: tags.add('briefing')
+    if any(x in fn for x in ['template', 'make_a_copy', 'protocol']): tags.add('template')
+    if 'analysis' in fn or 'interim' in fn: tags.add('analysis')
+    if 'prd' in fn or 'specification' in fn: tags.add('specification')
+    if 'pipeline' in fn or 'redaction' in fn: tags.add('redaction')
+
+    # Domain
+    if 'ndis' in fn or 'ndis' in cat: tags.add('ndis')
+    if 'mvp' in fn: tags.add('mvp')
+    if 'iso' in fn or 'iso_27001' in cat: tags.add('compliance')
+    if 'ontology' in fn or 'ontolog' in cat: tags.add('ontology')
+    if 'consent' in fn or 'nda' in fn: tags.add('legal')
+    if 'contact' in fn or 'tracker' in fn: tags.add('contacts')
+
+    # Stakeholder facing
+    if 'investor' in cat: tags.add('investor-facing')
+    if 'website' in fn or 'faq' in fn or 'objection' in fn: tags.add('external-facing')
+    if 'testing_guide' in fn or 'test_doc' in cat: tags.add('synthetic-data')
+
+    # Participant vs SC (support coordinator)
+    if 'participants/' in cat and 'participant' not in fn:
+        tags.add('support-coordinator')
+    elif 'participant' in fn.lower():
+        tags.add('participant')
+
+    return sorted(tags) if tags else ['general']
 
 def inject_frontmatter(filepath, meta, category, source_drive):
     """Read an .md file, prepend YAML frontmatter."""
