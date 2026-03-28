@@ -270,19 +270,30 @@ def inject_frontmatter(filepath, meta, category, source_drive):
     if content.startswith('---\n'):
         return
 
-    # Extract title from first H1 or first non-empty line
-    title = Path(filepath).stem.replace('_', ' ')
+    # Extract title: prefer H1 heading, fall back to filename
+    filename_title = Path(filepath).stem.replace('_', ' ')
+    title = filename_title
     for line in content.split('\n'):
         line = line.strip()
+        if not line or line.startswith('---'):
+            continue
         if line.startswith('# '):
-            title = line[2:].strip().strip('*')
+            candidate = line[2:].strip().strip('*')
+            if len(candidate) > 3 and len(candidate) <= 100:
+                title = candidate
             break
-        elif line.startswith('**') and line.endswith('**'):
-            title = line.strip('*').strip()
+        # Skip template instructions, markdown artefacts, tables
+        if line.startswith('*[') or line.startswith('|') or line.startswith('>'):
             break
-        elif line and not line.startswith('---'):
-            title = line[:100]
+        if line.startswith('**'):
+            candidate = line.strip('*').strip().rstrip('♡').strip().rstrip('|').strip()
+            if len(candidate) > 3 and len(candidate) <= 80:
+                title = candidate
             break
+        # Generic first line — only use if it looks like a real title
+        if len(line) <= 100 and not line.startswith('[') and not line.startswith('!'):
+            title = line
+        break
 
     word_count = len(content.split())
     has_images = bool(re.search(r'!\[', content))
