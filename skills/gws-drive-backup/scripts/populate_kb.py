@@ -103,15 +103,8 @@ def get_category(rel_path):
 
 # File inclusion rules
 INCLUDE_EXT = {'.md', '.csv', '.pdf', '.txt'}
-SKIP_NAMES = {
-    'blog_draft_gws_drive_backup.md',
-    '00_file_manifest.md',
-    '.DS_Store',
-}
-SKIP_PATTERNS = [
-    r'Testing_Business_Ideas',
-    r'Value_Proposition_Design.*How_to_Create',
-]
+SKIP_NAMES = {'.DS_Store'}
+SKIP_PATTERNS = []
 
 def should_include(path, name):
     """Check if a file should be included."""
@@ -308,21 +301,24 @@ def find_referenced_images(src_dir):
 
 # Main
 print("=== Scanning for referenced images ===")
-find_referenced_images(SRC / "my_drive")
-find_referenced_images(SRC / "shared_drives")
+for d in SRC.iterdir():
+    if d.is_dir() and d != DST and not d.name.startswith('.'):
+        find_referenced_images(d)
 print(f"Found {len(referenced_images)} referenced images")
 
-print("\n=== Populating bella_kb/ ===")
+print(f"\n=== Populating KB at {DST.name}/ ===")
 DST.mkdir(parents=True, exist_ok=True)
 
 copied = 0
 skipped = 0
 errors = []
 
-for src_base in [SRC / "my_drive", SRC / "shared_drives"]:
+# Scan all top-level subdirectories in the backup (e.g. my_drive/, shared_drives/)
+src_bases = [d for d in SRC.iterdir() if d.is_dir() and d != DST and not d.name.startswith('.')]
+for src_base in src_bases:
     for root, dirs, files in os.walk(src_base):
-        # Skip bella_kb itself
-        if 'bella_kb' in root:
+        # Skip the KB output directory
+        if str(DST) in root:
             continue
         for fname in sorted(files):
             src_path = Path(root) / fname
@@ -356,17 +352,8 @@ for src_base in [SRC / "my_drive", SRC / "shared_drives"]:
 
             category = get_category(rel_path)
             if not category:
-                # Try to assign based on broader patterns
-                if 'Co-Design' in str(rel_path):
-                    category = 'co-design'
-                elif 'GTM' in str(rel_path):
-                    category = 'strategy'
-                elif 'Product' in str(rel_path):
-                    category = 'operations'
-                else:
-                    print(f"  SKIP (no category): {rel_path}")
-                    skipped += 1
-                    continue
+                skipped += 1
+                continue
 
             # Sanitise filename
             safe_name = sanitise(fname)

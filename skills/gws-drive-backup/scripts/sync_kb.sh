@@ -21,8 +21,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-BACKUP_DIR="${1:-$HOME/Documents/bella_assist/gws_copy}"
-KB_DIR="${2:-$BACKUP_DIR/bella_kb}"
+BACKUP_DIR="${1:-$HOME/gws_backup}"
+KB_DIR="${2:-$BACKUP_DIR/kb}"
 FULL_SYNC=false
 SHARED_ONLY=true
 
