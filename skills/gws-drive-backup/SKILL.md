@@ -99,15 +99,54 @@ Verifies:
 
 Creates a filtered, AI-optimised copy containing only token-efficient formats (.md, .csv, .pdf, referenced .png) with YAML frontmatter on every .md and a master `index.json`.
 
-Requires `drive_metadata.json` from Phase 0.
+```bash
+python3 <skill_dir>/scripts/populate_kb.py <backup_dir> <kb_dir> \
+  --mapping <kb_dir>/category_mapping.json \
+  --skip <kb_dir>/skip_patterns.json \
+  --metadata <backup_dir>/drive_metadata.json
+```
 
-The output directory is structured by topic (architecture, strategy, co-design, etc.) rather than mirroring the Drive folder layout. Each .md file gets YAML frontmatter with:
+**Required flags:**
+- `<backup_dir>` — the directory from Phases 1-2 (contains `my_drive/`, `shared_drives/`)
+- `<kb_dir>` — output directory for the knowledge base
+- `--metadata` — path to `drive_metadata.json` from Phase 0 (provides google_doc_id, author, timestamps)
+
+**Config files you create (project-specific):**
+
+`category_mapping.json` — maps Drive folder patterns to KB topic directories:
+```json
+[
+  {"pattern": "Folder_Name/Subfolder/", "category": "topic-name"},
+  {"pattern": ".*Architecture.*", "category": "architecture"},
+  {"pattern": ".*Meeting_Minutes/", "category": "operations"}
+]
+```
+Each rule is a regex tested against the file's relative path. First match wins. Files with no match are skipped.
+
+`skip_patterns.json` (optional) — regex patterns for files to exclude:
+```json
+["Copyrighted_Book_Title", "draft_.*_backup"]
+```
+
+**Output:** The KB directory is structured by topic rather than mirroring Drive layout. Each .md file gets YAML frontmatter with:
 - `title`, `google_doc_id`, `google_doc_url` (from Drive metadata)
 - `last_modified`, `last_modified_by` (from Drive metadata)
 - `category`, `tags`, `doc_type` (derived from repo path and filename)
 - `word_count`, `has_images`, `sensitivity` (computed locally)
 
-Includes a `CLAUDE.md` navigation guide and `index.json` catalogue for programmatic access.
+### Phase 5 — Generate index and sync (`sync_kb.sh`)
+
+Orchestrates all phases end-to-end and creates a GitHub PR:
+
+```bash
+bash <skill_dir>/scripts/sync_kb.sh <backup_dir> <kb_dir>
+```
+
+Defaults to `~/gws_backup` and `~/gws_backup/kb` if no args provided. Automatically picks up `category_mapping.json` and `skip_patterns.json` from the KB directory if present.
+
+Add `--include-personal` to include personal Drive files (shared drives only by default).
+
+Generates `index.json` via `build_index.py` for programmatic catalogue access.
 
 ## Manual export commands
 
