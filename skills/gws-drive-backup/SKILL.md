@@ -15,7 +15,7 @@ description: Download and back up Google Drive files locally via the gws CLI wit
 
 Verify: `gws drive files list --params '{"pageSize": 1}'`
 
-## Five-phase workflow
+## Six-phase workflow
 
 ### Phase 0 — Export Drive metadata
 
