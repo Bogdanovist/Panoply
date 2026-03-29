@@ -79,7 +79,9 @@ echo ""
 echo "--- Phase 3: Populate KB ---"
 MAPPING_ARG=""
 [ -f "$KB_DIR/category_mapping.json" ] && MAPPING_ARG="--mapping $KB_DIR/category_mapping.json"
-python3 "$SCRIPT_DIR/populate_kb.py" "$BACKUP_DIR" "$KB_DIR" $MAPPING_ARG --metadata "$BACKUP_DIR/drive_metadata.json"
+SKIP_ARG=""
+[ -f "$KB_DIR/skip_patterns.json" ] && SKIP_ARG="--skip $KB_DIR/skip_patterns.json"
+python3 "$SCRIPT_DIR/populate_kb.py" "$BACKUP_DIR" "$KB_DIR" $MAPPING_ARG $SKIP_ARG --metadata "$BACKUP_DIR/drive_metadata.json"
 echo ""
 
 # --- Phase 4: Regenerate index ---
