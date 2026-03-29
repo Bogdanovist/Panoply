@@ -104,7 +104,13 @@ def get_category(rel_path):
 # File inclusion rules
 INCLUDE_EXT = {'.md', '.csv', '.pdf', '.txt'}
 SKIP_NAMES = {'.DS_Store'}
+# Load skip patterns from --skip flag (JSON array of regex patterns to exclude)
 SKIP_PATTERNS = []
+if "--skip" in sys.argv:
+    _idx = sys.argv.index("--skip")
+    with open(sys.argv[_idx + 1]) as _f:
+        SKIP_PATTERNS = json.load(_f)
+    print(f"Loaded {len(SKIP_PATTERNS)} skip patterns")
 
 def should_include(path, name):
     """Check if a file should be included."""
