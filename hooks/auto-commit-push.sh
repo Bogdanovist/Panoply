@@ -51,7 +51,7 @@ auto_commit_push() {
 auto_commit_push "$CLAUDE_PROJECT_DIR" "Project"
 
 # 2. Auto-commit global Claude Code config (skills, hooks, settings)
-DOTFILES_CLAUDE="$HOME/dotfiles-claude"
+DOTFILES_CLAUDE="$HOME/src/Panoply"
 if [ -d "$DOTFILES_CLAUDE/.git" ]; then
   auto_commit_push "$DOTFILES_CLAUDE" "Config"
 fi

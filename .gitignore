@@ -25,6 +25,10 @@ id_ed25519
 .npmrc
 .pypirc
 
+# Project dispatch artifacts (historical)
+projects/**/sprints/
+projects/**/*.pid
+
 # Runtime artifacts
 node_modules/
 __pycache__/

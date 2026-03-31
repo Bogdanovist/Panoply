@@ -1,17 +1,8 @@
 {
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
     "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "64000",
-    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80",
-    "MCP_TIMEOUT": "30000",
-    "MCP_TOOL_TIMEOUT": "60000"
-  },
-  "permissions": {
-    "deny": [
-      "mcp__perplexity__perplexity_research",
-      "mcp__perplexity__perplexity_reason"
-    ]
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80"
   },
   "hooks": {
     "Stop": [
@@ -26,15 +17,12 @@
       }
     ]
   },
-  "mcpServers": {},
   "enabledPlugins": {
     "dbt-skills@data-engineering-skills": true,
-    "snowflake-skills@data-engineering-skills": true,
-    "github@claude-plugins-official": true,
-    "playwright@claude-plugins-official": true,
-    "vercel@claude-plugins-official": true
+    "github@claude-plugins-official": true
   },
   "alwaysThinkingEnabled": true,
   "showTurnDuration": true,
-  "teammateMode": "tmux"
+  "teammateMode": "tmux",
+  "effortLevel": "high"
 }

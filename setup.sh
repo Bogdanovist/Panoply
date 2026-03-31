@@ -1,6 +1,6 @@
 #!/bin/bash
 # Setup script for syncing Claude Code config to a new machine.
-# Usage: git clone <repo-url> ~/dotfiles-claude && ~/dotfiles-claude/setup.sh
+# Usage: git clone <repo-url> ~/src/Panoply && ~/src/Panoply/setup.sh
 
 set -e
 
@@ -70,5 +70,5 @@ echo ""
 echo "Done! Claude Code config is now synced."
 echo ""
 echo "Next steps:"
-echo "  - Edit ~/dotfiles-claude/settings.local.json to add your MCP tool permissions"
-echo "  - Edit ~/dotfiles-claude/CLAUDE.md to set your language and workflow preferences"
+echo "  - Edit ~/src/Panoply/settings.local.json to add your MCP tool permissions"
+echo "  - Edit ~/src/Panoply/CLAUDE.md to set your workflow preferences"
