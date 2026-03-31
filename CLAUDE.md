@@ -38,6 +38,17 @@ Use agent teams for tasks that benefit from parallel work:
 - Multi-file refactors
 - Testing while implementing
 
+## Context management — do NOT use auto memory
+
+Do not save context to Claude Code's auto memory system. All persistent context goes into version-controlled locations:
+
+- **Repo-specific conventions/rules** → that repo's `.claude/rules/` directory
+- **Strategic/domain context** → `~/src/Panoply/skills/refine-project/references/`
+- **Project-specific context** → `~/src/Panoply/projects/{name}/`
+- **General working preferences** → this file (CLAUDE.md)
+
+If the user asks to "remember" something, save it to the appropriate location above instead of creating a memory file.
+
 ## Auto-commit workflow
 
 Changes are automatically committed and pushed to GitHub by a Stop hook after each response. Do NOT ask about version control — it is handled automatically.
