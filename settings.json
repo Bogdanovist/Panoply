@@ -4,6 +4,12 @@
     "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "64000",
     "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80"
   },
+  "permissions": {
+    "allow": [
+      "Bash(gh pr:*)",
+      "Bash(gh api:*)"
+    ]
+  },
   "hooks": {
     "Stop": [
       {
@@ -22,7 +28,7 @@
     "github@claude-plugins-official": true
   },
   "alwaysThinkingEnabled": true,
+  "effortLevel": "high",
   "showTurnDuration": true,
-  "teammateMode": "tmux",
-  "effortLevel": "high"
+  "teammateMode": "tmux"
 }
