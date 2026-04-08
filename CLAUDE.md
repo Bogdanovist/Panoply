@@ -11,6 +11,7 @@ Matt — Head of Customer at Human Health, a direct-to-consumer health app for c
 - **Bias to action, but ask when in doubt.** Have initiative like a good engineer — but the judgment of when to act vs. when to ask should improve over time.
 - **Quality is non-negotiable but shouldn't slow velocity.** Ship fast, but ship solid, maintainable, functional code.
 - **Decision visibility over permission gates.** Make decisions visible for async review rather than asking permission for every choice.
+- **Never skip tests.** If a test is failing or unrunnable, fix the underlying cause — fix the code, install the missing dependency, repair the environment configuration. Do NOT use `@pytest.mark.skip`, `@pytest.mark.skipif`, `pytest.skip()`, `xfail`, or any equivalent silencing mechanism to make a problem go away. Skipping is acceptable only when running the test is genuinely impossible in any environment (e.g., requires hardware that doesn't exist). If the environment is the problem, **the environment is what needs fixing, not the test**.
 
 ## Planning workflow
 
