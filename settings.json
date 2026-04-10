@@ -42,5 +42,6 @@
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
   "showTurnDuration": true,
-  "teammateMode": "tmux"
+  "teammateMode": "tmux",
+  "skipDangerousModePermissionPrompt": true
 }
