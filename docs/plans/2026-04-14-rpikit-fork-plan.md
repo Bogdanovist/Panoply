@@ -631,4 +631,12 @@ Each phase ends with a checkpoint step (1.6, 2.7, 4.2, 6.4) that exercises end-t
   - Deviation: skill-count edits targeted by Phase 5.6 are done here instead so the README is consistent in one pass. Setup.sh description also updated to reflect `agents/` symlink.
 - [x] Phase 4 complete (Step 4.1 done; `claude plugin disable rpikit@rpikit` returned "Successfully disabled"; `claude plugin list` shows rpikit status = disabled)
   - Deviation: Step 4.2 interactive runtime verification deferred to post-restart Phase 6 sweep — matches orchestrator hand-off model. The current session still shows plugin-tier skills because they loaded before the disable.
+- [x] Phase 5 complete (Steps 5.1-5.7 done)
+  - 5.1: `claude plugin uninstall rpikit@rpikit` returned "Successfully uninstalled"; `claude plugin list` no longer shows rpikit.
+  - 5.2: `extraKnownMarketplaces.rpikit` block removed from settings.json. The `rpikit@rpikit: true` entry in `enabledPlugins` was already gone (CLI uninstall removed it). JSON valid.
+  - 5.3: `pluginConfigs` key NOT PRESENT — no `pluginConfigs.rpikit` ever existed.
+  - 5.4: Removed both Read permissions `Read(//Users/.../plugins/cache/rpikit/.../**)` and `Read(//Users/.../plugins/**)` from `.claude/settings.local.json`, plus the stale `Bash(grep -rn ... plugins/cache/rpikit/...)` permission. JSON valid.
+  - 5.5: Gitignored `settings.local.json` has no rpikit/plugins-cache references — nothing to clean.
+  - 5.6: No-op — README.md's rpikit references were handled in Phase 3; dbt/snowflake plugin install copy retained since that plugin is still active.
+  - 5.7: Sweeping grep `grep -rn rpikit ~/src/Panoply/ --include=*.json --include=*.md --include=*.sh` (excluding plan/research docs) returns empty — done.
 - [ ] Implementation complete

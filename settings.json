@@ -28,16 +28,7 @@
   },
   "enabledPlugins": {
     "dbt-skills@data-engineering-skills": true,
-    "github@claude-plugins-official": true,
-    "rpikit@rpikit": true
-  },
-  "extraKnownMarketplaces": {
-    "rpikit": {
-      "source": {
-        "source": "github",
-        "repo": "bostonaholic/rpikit"
-      }
-    }
+    "github@claude-plugins-official": true
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
