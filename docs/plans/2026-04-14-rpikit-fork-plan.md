@@ -629,4 +629,6 @@ Each phase ends with a checkpoint step (1.6, 2.7, 4.2, 6.4) that exercises end-t
 - [x] Phase 3 complete (Per-Repo Convention Overrides section added to README.md; local skills/agents table rewritten to match reality — 31 skills, 7 agents, stale entries removed)
   - Opportunistic fix: the skill table was heavily out of date (mentioned docx/playwright/pptx/replit-prd/wcag-accessibility/web-artifacts-builder/web-design-guidelines/webapp-testing — none exist in skills/). Rebuilt to match `ls skills/`. Added new Local agents table.
   - Deviation: skill-count edits targeted by Phase 5.6 are done here instead so the README is consistent in one pass. Setup.sh description also updated to reflect `agents/` symlink.
+- [x] Phase 4 complete (Step 4.1 done; `claude plugin disable rpikit@rpikit` returned "Successfully disabled"; `claude plugin list` shows rpikit status = disabled)
+  - Deviation: Step 4.2 interactive runtime verification deferred to post-restart Phase 6 sweep — matches orchestrator hand-off model. The current session still shows plugin-tier skills because they loaded before the disable.
 - [ ] Implementation complete
