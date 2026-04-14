@@ -36,7 +36,7 @@ git clone https://github.com/haberlah/dotfiles-claude.git ~/dotfiles-claude
 ```
 
 The setup script:
-- Symlinks `CLAUDE.md`, `settings.json`, `hooks/`, and `skills/` into `~/.claude/`
+- Symlinks `CLAUDE.md`, `settings.json`, `hooks/`, `skills/`, and `agents/` into `~/.claude/`
 - Copies `settings.local.example.json` to `settings.local.json` (your machine-specific permissions — gitignored, never pushed)
 - Installs a pre-commit hook that blocks secrets
 - Backs up any existing config before overwriting
@@ -72,7 +72,8 @@ dotfiles-claude/
 ├── hooks/
 │   ├── auto-commit-push.sh         # Stop hook: auto-commit + push
 │   └── pre-commit-secrets-check.sh # Git hook: blocks secrets from commits
-├── skills/                         # 13 local skills (+ 9 via plugin)
+├── skills/                         # 31 local skills
+├── agents/                         # 7 local agents
 ├── setup.sh                        # One-command installer
 └── LICENSE                         # MIT
 ```
@@ -136,25 +137,55 @@ This means installing a skill, tweaking a setting, or adding a hook is automatic
 
 ## Skills
 
-13 local skills + 9 via plugin (22 total):
+31 local skills + 9 via plugin (40 total):
 
 ### Local skills (in `skills/`)
 
 | Skill | Purpose |
 |---|---|
 | `article-extractor` | Extract clean content from URLs |
-| `docx` | Create/edit Word documents with tracked changes |
+| `brainstorming` | Collaborative design dialogue before research/planning |
+| `complete-project` | Review, archive and retrospect completed projects |
+| `design-project` | Produce a solution design from a refined intent |
+| `design-studio` | Interactive Streamlit design studio with hot-reload |
+| `documenting-decisions` | Record ADRs in `docs/decisions/` |
+| `end-session` | CI checks + push + PR on session exit |
+| `finishing-work` | Structured completion workflow for implementations |
+| `git-worktrees` | Isolated worktree setup for parallel development |
+| `implementing-plans` | Execute an approved plan with checkpoint verification |
+| `organise-repo` | Audit/set up a repo's `.claude/` configuration |
+| `parallel-agents` | Concurrent agent dispatch for independent problems |
 | `pdf` | Extract, merge, split, fill PDF forms |
-| `playwright` | Browser automation and testing |
-| `pptx` | Create/edit presentations |
 | `react-best-practices` | Vercel's React/Next.js performance patterns |
-| `replit-prd` | PRD generation for Replit Agent |
+| `receiving-code-review` | Verification-first response to review feedback |
+| `refine-project` | Interactive refinement of a project intent document |
+| `research-plan-implement` | End-to-end RPI pipeline via parallel subagents |
+| `researching-codebase` | Thorough codebase exploration through dialogue |
+| `retro` | Retrospective on code quality, context, and conventions |
+| `review` | Inline review of the current branch or a named PR |
+| `reviewing-code` | Code review methodology with Conventional Comments |
+| `security-review` | Security review methodology for implementation changes |
 | `skill-creator` | Create new Claude Code skills |
-| `wcag-accessibility` | WCAG 2.2 AA compliance |
-| `web-artifacts-builder` | Multi-component HTML artifacts |
-| `web-design-guidelines` | UI review against best practices |
-| `webapp-testing` | Test local web apps with Playwright |
+| `synthesizing-research` | Consolidate multiple research docs into a unified report |
+| `system-feedback` | Feedback loop on the Panoply config system itself |
+| `systematic-debugging` | Root-cause investigation for failures and bugs |
+| `test-driven-development` | Rigorous RED-GREEN-REFACTOR discipline |
+| `verification-before-completion` | Evidence-before-claims for implementation completion |
+| `wardley-mapping` | Strategic Wardley map creation |
+| `writing-plans` | Transform research into actionable implementation plans |
 | `xlsx` | Create/analyse spreadsheets |
+
+### Local agents (in `agents/`)
+
+| Agent | Purpose |
+|---|---|
+| `code-reviewer` | Quality-focused code review with soft-gating verdict |
+| `debugger` | Root-cause debugging agent |
+| `file-finder` | Locate files and symbols across the repo |
+| `security-reviewer` | Security-focused review, hard-blocking verdict |
+| `test-runner` | Run and interpret project tests |
+| `verifier` | Evidence-based verification of claims |
+| `web-researcher` | Web research with WebSearch/WebFetch |
 
 ### Plugin skills ([AltimateAI/data-engineering-skills](https://github.com/AltimateAI/data-engineering-skills))
 
@@ -178,6 +209,34 @@ Skills are available immediately in your next Claude Code session.
 | `snowflake-skills` | finding-expensive-queries, optimizing-query-by-id, optimizing-query-text |
 
 All skills are automatically available in Claude Code sessions. To invoke a skill, use `/<skill-name>` (e.g., `/pdf`, `/xlsx`). To remove a local skill, delete its directory from `skills/`. Plugin skills are managed via `claude plugin list` / `claude plugin uninstall`.
+
+## Per-Repo Convention Overrides
+
+User-level skills in `~/src/Panoply/skills/` are globally authoritative — project-level skills in a repo's `.claude/skills/` do NOT shadow them. This is architectural: Claude Code's skill resolution treats user-tier as the single source of truth for workflow methodology.
+
+Per-repo conventions go in `.claude/rules/<name>.md` instead, with optional `paths:` frontmatter so rules load only when editing matching files. Rules are **additive, not override** — they supply repo-specific mechanics on top of the global methodology.
+
+**Example**: a repo wants a different testing fixture style. Create `.claude/rules/testing.md`:
+
+```markdown
+---
+paths:
+  - "tests/**"
+  - "**/*_test.py"
+description: Test conventions for this repo
+---
+
+# Testing conventions
+
+- Use pytest fixtures in `tests/conftest.py`, not module-level setup
+- Mock external APIs with `responses`, not `unittest.mock`
+- Factory pattern via `factory-boy`; no manual model construction
+- Run locally with `pytest -q --maxfail=1`
+```
+
+The global `test-driven-development` skill continues to supply the RED-GREEN-REFACTOR methodology; the rule supplies the repo-specific runner invocation and fixture conventions.
+
+See [Claude Code memory docs](https://code.claude.com/docs/en/memory) for how rules are loaded and scoped.
 
 ## Customising After Forking
 

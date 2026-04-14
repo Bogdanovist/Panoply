@@ -626,4 +626,7 @@ Each phase ends with a checkpoint step (1.6, 2.7, 4.2, 6.4) that exercises end-t
   - Deviation note: Panoply had 15 skills pre-fork (not 16 as plan stated); post-fork total is 31 dirs, not 32. No name collisions. All 16 forked skills present.
 - [x] Phase 2 complete (Steps 2.1-2.6 done; all rpikit: refs stripped from skills/ and agents/; code-reviewer.md fixed to reference `reviewing-code`)
   - Deviation note: Step 2.7 (manual RPI pipeline run) skipped per subagent orchestrator instructions — grep-based mechanical verification is authoritative here and is green.
+- [x] Phase 3 complete (Per-Repo Convention Overrides section added to README.md; local skills/agents table rewritten to match reality — 31 skills, 7 agents, stale entries removed)
+  - Opportunistic fix: the skill table was heavily out of date (mentioned docx/playwright/pptx/replit-prd/wcag-accessibility/web-artifacts-builder/web-design-guidelines/webapp-testing — none exist in skills/). Rebuilt to match `ls skills/`. Added new Local agents table.
+  - Deviation: skill-count edits targeted by Phase 5.6 are done here instead so the README is consistent in one pass. Setup.sh description also updated to reflect `agents/` symlink.
 - [ ] Implementation complete
