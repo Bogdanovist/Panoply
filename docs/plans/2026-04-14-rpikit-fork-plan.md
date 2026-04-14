@@ -635,8 +635,12 @@ Each phase ends with a checkpoint step (1.6, 2.7, 4.2, 6.4) that exercises end-t
   - 5.1: `claude plugin uninstall rpikit@rpikit` returned "Successfully uninstalled"; `claude plugin list` no longer shows rpikit.
   - 5.2: `extraKnownMarketplaces.rpikit` block removed from settings.json. The `rpikit@rpikit: true` entry in `enabledPlugins` was already gone (CLI uninstall removed it). JSON valid.
   - 5.3: `pluginConfigs` key NOT PRESENT — no `pluginConfigs.rpikit` ever existed.
-  - 5.4: Removed both Read permissions `Read(//Users/.../plugins/cache/rpikit/.../**)` and `Read(//Users/.../plugins/**)` from `.claude/settings.local.json`, plus the stale `Bash(grep -rn ... plugins/cache/rpikit/...)` permission. JSON valid.
+  - 5.4: Removed both Read permissions `Read(//Users/.../plugins/cache/rpikit/.../**)` and `Read(//Users/.../plugins/**)` from `.claude/settings.local.json`, plus the stale `Bash(grep -rn ... plugins/cache/rpikit/...)` permission. JSON valid. (Note: file is gitignored, so edit is local-only; not committed.)
   - 5.5: Gitignored `settings.local.json` has no rpikit/plugins-cache references — nothing to clean.
   - 5.6: No-op — README.md's rpikit references were handled in Phase 3; dbt/snowflake plugin install copy retained since that plugin is still active.
   - 5.7: Sweeping grep `grep -rn rpikit ~/src/Panoply/ --include=*.json --include=*.md --include=*.sh` (excluding plan/research docs) returns empty — done.
+- [x] Phase 6 partial (Steps 6.1-6.2 done; 6.3-6.4 require Claude Code restart and are handed off to the orchestrator)
+  - 6.1: `rm -rf ~/.claude/plugins/cache/rpikit` and `rm -rf ~/.claude/plugins/marketplaces/rpikit` executed. Both dirs absent.
+  - 6.2: `known_marketplaces.json` contained a stale `rpikit` entry — removed and re-validated JSON. `installed_plugins.json` was already clean.
+  - 6.3-6.4: **PAUSE** — user/orchestrator must restart Claude Code to validate `/brainstorming` still works and `/rpikit:brainstorming` is now an unknown skill. Final manual sweep in fresh session per Step 6.4.
 - [ ] Implementation complete
