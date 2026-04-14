@@ -186,7 +186,7 @@ Spawn a subagent with the Agent tool:
 
 1. Read the research document at
    docs/plans/YYYY-MM-DD-<topic>-research.md
-2. Invoke the Skill tool with skill: 'rpikit:writing-plans' and
+2. Invoke the Skill tool with skill: 'writing-plans' and
    args: '<topic>'
 3. Follow the skill's full methodology to create the plan
 4. Write the plan to docs/plans/YYYY-MM-DD-<topic>-plan.md
@@ -235,7 +235,7 @@ The implementing-plans skill will detect this via 'test -f .git' and
 skip the worktree offer — this is expected behavior.
 
 1. Read the plan at docs/plans/YYYY-MM-DD-<topic>-plan.md
-2. Invoke the Skill tool with skill: 'rpikit:implementing-plans' and
+2. Invoke the Skill tool with skill: 'implementing-plans' and
    args: 'docs/plans/YYYY-MM-DD-<topic>-plan.md'
 3. Follow the skill's full methodology:
    - Execute steps in order
@@ -291,7 +291,7 @@ Match research depth to complexity:
 If requirements are unclear, prepend brainstorming:
 
 ```text
-Skill tool with skill: "rpikit:brainstorming"
+Skill tool with skill: "brainstorming"
 ```
 
 Then resume the pipeline at Phase 1 with clarified requirements.

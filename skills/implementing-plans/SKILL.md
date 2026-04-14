@@ -49,10 +49,10 @@ Look for plan at: `docs/plans/YYYY-MM-DD-<topic>-plan.md`
 Cannot proceed without an approved plan.
 
 High-stakes implementations require:
-1. Research phase (rpikit:researching-codebase skill)
-2. Approved plan (rpikit:writing-plans skill)
+1. Research phase (researching-codebase skill)
+2. Approved plan (writing-plans skill)
 
-Invoke the Skill tool with skill "rpikit:writing-plans" to create a plan first.
+Invoke the Skill tool with skill "writing-plans" to create a plan first.
 ```
 
 Stop and do not proceed.
@@ -74,7 +74,7 @@ Use AskUserQuestion with options:
 **Low Stakes** (isolated, easy rollback):
 
 ```text
-Note: Consider rpikit:researching-codebase and rpikit:writing-plans skills for better results.
+Note: Consider researching-codebase and writing-plans skills for better results.
 Proceeding with implementation...
 ```
 

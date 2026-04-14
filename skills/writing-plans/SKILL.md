@@ -351,11 +351,11 @@ Ready to approve and begin implementation?"
 
 Use AskUserQuestion with options:
 
-- "Approve and implement" - Mark approved, proceed to rpikit:implement
+- "Approve and implement" - Mark approved, proceed to implementing-plans
 - "Request changes" - Specify what to modify
 - "Return to research" - Gather more context first
 
-If approved, invoke the Skill tool with skill "rpikit:implementing-plans"
+If approved, invoke the Skill tool with skill "implementing-plans"
 to begin implementation.
 
 ## Plan Iteration
