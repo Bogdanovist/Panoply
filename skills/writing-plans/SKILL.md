@@ -131,7 +131,7 @@ For each code-changing task, list:
   impractical.
 
 Structure task steps so the test is the first sub-step and production code follows. This maps directly to the
-Red-Green-Refactor cycle enforced by the `rpikit:test-driven-development` skill during implementation.
+Red-Green-Refactor cycle enforced by the `test-driven-development` skill during implementation.
 
 > **Boundary**: Plans enumerate *what* to test (cases, inputs, expected
 > outputs). The TDD skill covers *how* to execute (Red-Green-Refactor cycle,

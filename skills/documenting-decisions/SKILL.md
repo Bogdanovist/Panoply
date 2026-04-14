@@ -214,7 +214,7 @@ When superseding a decision, the new ADR should reference the old one in its Con
 This skill fits into the workflow after planning or design work:
 
 ```text
-/rpikit:brainstorming ──► /rpikit:writing-plans ──► /rpikit:documenting-decisions ──► docs/decisions/NNNN-*.md
+/brainstorming ──► /writing-plans ──► /documenting-decisions ──► docs/decisions/NNNN-*.md
 ```
 
 Design documents (`*-design.md`) and planning documents (`*-plan.md`) are the primary inputs. Record decisions after

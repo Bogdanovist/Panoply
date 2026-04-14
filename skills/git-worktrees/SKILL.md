@@ -21,7 +21,7 @@ creation with safety verification.
 ### Called by
 
 - `implementing-plans` - Offers worktree isolation before implementation
-- User directly via `/rpikit:git-worktrees`
+- User directly via `/git-worktrees`
 
 ### Pairs with
 

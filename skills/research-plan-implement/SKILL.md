@@ -59,9 +59,9 @@ Use this pipeline when:
 
 Do NOT use when:
 
-- Requirements are already clear (skip to `rpikit:writing-plans`)
-- A plan already exists (skip to `rpikit:implementing-plans`)
-- This is a simple bug fix (use `rpikit:systematic-debugging`)
+- Requirements are already clear (skip to `writing-plans`)
+- A plan already exists (skip to `implementing-plans`)
+- This is a simple bug fix (use `systematic-debugging`)
 - Only research is needed without implementation
 
 ## Phase 1: Research (Parallel Subagents)
