@@ -88,7 +88,7 @@ Spawn a subagent with the Agent tool:
   model: "sonnet"
   prompt: "Research [feature area] for the goal: [what will be implemented].
 
-1. Invoke the Skill tool with skill: 'rpikit:researching-codebase'
+1. Invoke the Skill tool with skill: 'researching-codebase'
    and args: '[feature area]'
 2. Follow the skill's full methodology (interrogation, exploration,
    documentation)
@@ -139,7 +139,7 @@ Spawn a subagent with the Agent tool:
   model: "sonnet"
   prompt: "Synthesize all research findings for '<topic>'.
 
-1. Invoke the Skill tool with skill: 'rpikit:synthesizing-research'
+1. Invoke the Skill tool with skill: 'synthesizing-research'
    and args: '<topic>'
 2. Follow the skill's full methodology to consolidate:
    - docs/plans/YYYY-MM-DD-<topic>-codebase.md
