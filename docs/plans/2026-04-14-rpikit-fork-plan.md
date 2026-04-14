@@ -624,4 +624,6 @@ Each phase ends with a checkpoint step (1.6, 2.7, 4.2, 6.4) that exercises end-t
 - [x] Implementation started
 - [x] Phase 1 complete (Steps 1.1-1.5 done; 1.6 empirically validated via skill-reload reminder showing both user-tier and plugin-tier skills available; 1.7 via commit below)
   - Deviation note: Panoply had 15 skills pre-fork (not 16 as plan stated); post-fork total is 31 dirs, not 32. No name collisions. All 16 forked skills present.
+- [x] Phase 2 complete (Steps 2.1-2.6 done; all rpikit: refs stripped from skills/ and agents/; code-reviewer.md fixed to reference `reviewing-code`)
+  - Deviation note: Step 2.7 (manual RPI pipeline run) skipped per subagent orchestrator instructions — grep-based mechanical verification is authoritative here and is green.
 - [ ] Implementation complete

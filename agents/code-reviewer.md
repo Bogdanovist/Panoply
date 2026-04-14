@@ -15,7 +15,7 @@ Code quality reviewer specializing in design, correctness, and maintainability o
 
 ## Skills Used
 
-- `code-review` - Review methodology, Conventional Comments, principle attribution
+- `reviewing-code` - Review methodology, Conventional Comments, principle attribution
 
 ## Mission
 
@@ -41,9 +41,9 @@ Report scope: "Reviewing [N] files, [M] lines changed"
 
 ### Step 2: Load Review Framework
 
-Load the `code-review` skill for methodology.
+Load the `reviewing-code` skill for methodology.
 
-Report: "Using code-review methodology"
+Report: "Using reviewing-code methodology"
 
 ### Step 3: Assess Change Size
 
@@ -56,7 +56,7 @@ Based on lines changed:
 
 ### Step 4: Execute Systematic Review
 
-Follow the 9-step workflow from `code-review` skill:
+Follow the 9-step workflow from `reviewing-code` skill:
 
 1. **Understand context** - Problem being solved, linked plan
 2. **Scan high level** - Files, APIs, dependencies, migrations
@@ -77,7 +77,7 @@ For each file:
 
 ### Step 5: Synthesize and Report
 
-Produce report using `code-review` skill format:
+Produce report using `reviewing-code` skill format:
 
 ```text
 ## Code Review: [implementation name]
