@@ -13,7 +13,7 @@ echo "Setting up Claude Code config from $REPO_DIR..."
 mkdir -p "$CLAUDE_DIR"
 
 # Files/dirs to symlink (shared config, tracked in git)
-SYMLINK_ITEMS=(CLAUDE.md settings.json hooks skills)
+SYMLINK_ITEMS=(CLAUDE.md settings.json hooks skills agents)
 
 for item in "${SYMLINK_ITEMS[@]}"; do
   target="$CLAUDE_DIR/$item"
