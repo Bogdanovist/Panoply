@@ -40,9 +40,11 @@ ORCHESTRATOR (main context — stays thin)
   │
   ├── [APPROVAL GATE: User approves plan]
   │
-  └── Phase 3: Spawn implementation subagent
-        └── Subagent: reads plan file, executes steps
-        └── Output: code changes, test results
+  └── Phase 3: Spawn ONE implementer per plan phase
+        │     (sequential by default; parallel only where the plan
+        │      marks phases as independent; pause at any phase the
+        │      plan marks as gated, honouring its chosen mechanism)
+        └── Output: code changes, test results, PR(s)
 ```
 
 **Key principle**: Subagents communicate through files, not conversation context. Each subagent reads the artifacts from
@@ -191,6 +193,27 @@ Spawn a subagent with the Agent tool:
 3. Follow the skill's full methodology to create the plan
 4. Write the plan to docs/plans/YYYY-MM-DD-<topic>-plan.md
 
+Size each phase so it is one clear task a single implementer can
+hold in context end-to-end — not a grab-bag of loosely related work.
+If a phase is growing broad, split it.
+
+For EACH phase, the plan must include an 'Execution' block with:
+  - Scope: one-sentence description of the implementer's task
+  - Depends on: list of prior phase names (or 'none')
+  - Parallel with: list of phase names that can run concurrently
+    (or 'none' — sequential is the default)
+  - Gate: either 'autonomous' OR a described review gate. Pick the
+    mechanism that fits the phase (examples: orchestrator pauses and
+    asks the user to review before the next phase; implementer opens
+    a sub-PR into a feature branch and stops until merged; etc.).
+    There is no implicit default — every phase must state this
+    explicitly.
+
+The overall plan must also state the branch/PR strategy at the top
+(e.g. single PR to main at the end, or feature branch with per-phase
+sub-PRs, or other). Pick what fits; feature-branch-with-sub-PRs is
+one common option when multiple phases need review.
+
 The plan must reference the research document and be self-contained.
 Do NOT ask the user questions — use the research document as your
 source of truth for requirements and constraints."
@@ -218,53 +241,92 @@ Use AskUserQuestion:
 
 **Do not skip this approval gate.** The user must explicitly approve the plan before implementation begins.
 
-## Phase 3: Implement (Dedicated Subagent)
+## Phase 3: Implement (One Subagent Per Plan Phase)
 
-After plan approval, spawn an implementation subagent that reads the plan and executes it. The subagent gets a fresh
-context window with only the plan file as input.
+After plan approval, work through the plan **one phase at a time**, spawning exactly ONE implementer per phase. Each
+implementer gets a fresh context window scoped to a single clear task, so its context stays focused and uncluttered.
+
+### Step 1: Read the Plan's Execution Structure
+
+Read the plan file and extract, for each phase, the `Execution` block (scope, depends-on, parallel-with, gate) plus the
+overall branch/PR strategy. The orchestrator only reads this structural metadata plus the phase's own section — not the
+full content of other phases.
+
+If the plan is missing per-phase `Execution` blocks, stop and spawn a fresh planner to add them — do not proceed without
+explicit gating and dependency info.
+
+### Step 2: Execute Phases in Dependency Order
+
+Walk the phases respecting `depends on`. **Sequential is the default.** Spawn multiple implementers concurrently (in a
+single message with multiple Agent calls) ONLY when the plan explicitly marks phases as `parallel with` each other AND
+their dependencies are satisfied.
+
+For each phase (or parallel group), spawn exactly one implementer per phase:
 
 ```text
 Spawn a subagent with the Agent tool:
-  name: "implementer"
+  name: "implementer-<phase-slug>"
   model: "opus"
   isolation: "worktree"
-  prompt: "You are implementing an approved plan.
+  prompt: "You are implementing ONE phase of an approved plan.
 
 NOTE: You are running in an isolated worktree (isolation: worktree).
 The implementing-plans skill will detect this via 'test -f .git' and
 skip the worktree offer — this is expected behavior.
 
-1. Read the plan at docs/plans/YYYY-MM-DD-<topic>-plan.md
+Plan: docs/plans/YYYY-MM-DD-<topic>-plan.md
+Your phase: <phase name>
+Your scope is limited to this phase only. Do NOT start work on any
+other phase, even if steps look related. Other phases have their own
+implementers.
+
+1. Read the plan, focusing on your phase's section and its
+   Execution block (scope, gate, branch strategy).
 2. Invoke the Skill tool with skill: 'implementing-plans' and
    args: 'docs/plans/YYYY-MM-DD-<topic>-plan.md'
-3. Follow the skill's full methodology:
-   - Execute steps in order
+3. Follow the skill's methodology for YOUR phase only:
+   - Execute your phase's steps in order
    - Run verification after each step
-   - Track progress
-   - Run code review and security review at completion
-4. Update the plan document status as you complete steps
-5. CRITICAL: git commit ALL changes before completing — uncommitted
-   work in an isolated worktree is silently destroyed on cleanup
+   - Run code review and security review at phase completion
+4. Update the plan document status for YOUR phase's steps.
+5. Respect the phase's Gate spec: if it says open a sub-PR and
+   stop, do that; if it says autonomous, just commit and finish.
+6. CRITICAL: git commit ALL changes before completing — uncommitted
+   work in an isolated worktree is silently destroyed on cleanup.
 
-The plan has been approved by the user. Execute it as written. If you
-encounter issues that require plan changes, document them and return
-the issue — do NOT deviate silently."
+Execute the phase as written. If you encounter issues requiring plan
+changes, document them and return the issue — do NOT deviate silently
+and do NOT bleed into adjacent phases."
 ```
 
-### Report Results
+### Step 3: Honour Review Gates Between Phases
 
-When the implementation subagent completes, present results:
+After each phase's implementer completes, consult that phase's `Gate` field:
+
+- **Autonomous** — proceed directly to the next phase (or parallel group) with no user prompt.
+- **Any review gate** — pause. Summarize what the phase produced (files changed, commits, sub-PR link if applicable),
+  then use AskUserQuestion with options to continue, request changes (spawn a new implementer for that phase), or stop.
+  Follow the specific mechanism the plan chose (e.g. wait for a sub-PR to merge, wait for user review-and-approve, etc.).
+
+Never skip a gate the plan declared, and never silently invent one the plan didn't declare.
+
+### Step 4: Final Report
+
+After the last phase completes (and, if applicable, the final PR is raised per the plan's branch strategy), present the
+rollup:
 
 ```text
 Implementation complete for '<topic>'.
 
-Steps completed: [N/M]
+Phases completed: [N/M]
+Branch strategy: [single PR to main | feature branch with sub-PRs | ...]
+Final PR: [url or "none raised — see plan"]
 Files changed: [list]
 Tests: [pass/fail]
-Reviews: [code review status, security review status]
+Reviews: [code review status, security review status per phase]
 ```
 
-If the subagent reported deviations or blockers, present them and ask the user how to proceed.
+If any implementer reported deviations or blockers, present them and ask the user how to proceed.
 
 ## Customizing the Pipeline
 
@@ -324,6 +386,10 @@ Use explicit `model` parameters when spawning subagents:
 | Spawn 5+ research subagents | Keep to 2-4 focused subagents |
 | Skip approval gates between phases | Always get explicit user approval |
 | Combine dependent research questions | Only parallelize independent questions |
+| Spawn one implementer for the whole plan | One implementer per plan phase, scoped to a single clear task |
+| Spawn multiple implementers for the same phase | Exactly one implementer per phase, always |
+| Parallelize phases by default | Sequential by default; parallel only when the plan marks phases as independent |
+| Assume a default gating mode (all-autonomous or all-gated) | Planner specifies gate explicitly per phase; orchestrator refuses to run otherwise |
 
 ## Quality Checklist
 
@@ -334,6 +400,18 @@ Before each phase transition:
 - [ ] Subagent results summary table presented
 - [ ] User approved before proceeding to next phase
 - [ ] Orchestrator context remains thin (no research/planning content)
+
+Before entering Phase 3:
+
+- [ ] Plan contains an `Execution` block per phase (scope, depends-on, parallel-with, gate)
+- [ ] Plan states overall branch/PR strategy
+- [ ] Each plan phase is sized for a single implementer's focused context
+
+During Phase 3:
+
+- [ ] Exactly one implementer spawned per phase — never multiple for the same phase
+- [ ] Phases run sequentially unless the plan explicitly marks them parallel
+- [ ] Every declared gate honoured; no invented gates, no skipped gates
 
 At pipeline completion:
 
