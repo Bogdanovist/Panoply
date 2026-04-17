@@ -116,6 +116,27 @@ After identifying relevant files, use the LSP tool for deeper structural underst
 > If LSP is unavailable (no configured language server), skip this step
 > and rely on Grep-based content search.
 
+### Gather Runtime Evidence (When Applicable)
+
+Code reading alone cannot answer questions about what the system *currently does at runtime* — the shape of real
+data, the volume and content of recent logs, the actual stdout of a CLI. For those questions, runtime evidence
+complements static analysis.
+
+Concrete domain examples:
+
+- **Data pipelines**: query data assets directly (e.g. `bq query`, `duckdb`, a notebook cell), inspect table
+  schemas, sample a handful of rows, check row counts and null distributions.
+- **Production services**: tail or grep recent logs, inspect a running endpoint's response, check a health or
+  metrics endpoint, look at structured log output for a representative request.
+- **CLI / local tools**: run the binary with a representative input, capture stdout and stderr, check the exit
+  code and any files the tool produces.
+
+Runtime evidence gathering is opt-in, scoped tightly to the question at hand, and must not mutate shared state —
+use read-only queries and avoid destructive commands.
+
+Findings confirmed by runtime evidence are tagged `[OBSERVED]` in Phase 3; findings inferred from static analysis
+only are tagged `[INFERRED]`.
+
 ### Research External Context (When Needed)
 
 For single-page lookups (e.g., checking a library's API docs or a specific GitHub issue), use WebFetch directly instead
@@ -149,6 +170,11 @@ Create research document at: `docs/plans/YYYY-MM-DD-<topic>-research.md`
 
 (Use today's date in YYYY-MM-DD format)
 
+Tag each finding inline with its evidence type. Use `[OBSERVED]` when the claim is backed by runtime evidence
+captured during Phase 2 (query output, log excerpt, CLI stdout); use `[INFERRED]` when the claim is read off
+source code without runtime confirmation. Place the tag at the start of the bullet or sentence making the claim,
+e.g. `[INFERRED] The retry logic appears to use exponential backoff based on src/api/retry.ts:42-57.`
+
 ```markdown
 # Research: <Topic> (YYYY-MM-DD)
 
@@ -171,6 +197,13 @@ Create research document at: `docs/plans/YYYY-MM-DD-<topic>-research.md`
 ### Existing Patterns
 
 [Patterns discovered that inform implementation]
+
+### Runtime Observations
+
+[Evidence captured by running code, querying data, or reading logs
+during exploration. Each entry records the command or query run,
+the raw (trimmed) output, and the conclusion drawn. Tag each
+conclusion [OBSERVED].]
 
 ### Dependencies
 
