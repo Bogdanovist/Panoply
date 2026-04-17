@@ -156,13 +156,13 @@ This means installing a skill, tweaking a setting, or adding a hook is automatic
 | `organise-repo` | Audit/set up a repo's `.claude/` configuration |
 | `parallel-agents` | Concurrent agent dispatch for independent problems |
 | `pdf` | Extract, merge, split, fill PDF forms |
+| `pr-preflight` | Local mirror of the GitHub Claude review bot — runs the five-axis review prompt against the current branch and prints a PASS/WARN/BLOCK verdict to stdout |
 | `react-best-practices` | Vercel's React/Next.js performance patterns |
 | `receiving-code-review` | Verification-first response to review feedback |
 | `refine-project` | Interactive refinement of a project intent document |
 | `research-plan-implement` | End-to-end RPI pipeline via parallel subagents |
 | `researching-codebase` | Thorough codebase exploration through dialogue |
 | `retro` | Retrospective on code quality, context, and conventions |
-| `review` | Inline review of the current branch or a named PR |
 | `reviewing-code` | Code review methodology with Conventional Comments |
 | `security-review` | Security review methodology for implementation changes |
 | `skill-creator` | Create new Claude Code skills |

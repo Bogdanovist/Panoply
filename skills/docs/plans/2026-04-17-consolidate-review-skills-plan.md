@@ -286,6 +286,14 @@ All seven merge. None were duplicative enough to drop. The salvage memo's analys
 - **Verify**: No NEW references beyond the five catalogued in the research doc. All five remain non-programmatic
   (changelog entry, historical plans, inventory doc, prose mention in `retro/SKILL.md`).
 - **Complexity**: Small
+- **Status**: Complete. Fresh sweep across `~/src/Panoply/` and `~/.claude/` (settings*.json, hooks/, agents/, CLAUDE.md,
+  plugins/cache) turned up zero programmatic hits. All matches were either (a) inside this plan's own docs/plans
+  artifacts, (b) `review/SKILL.md` itself (about to be deleted), (c) historical session jsonl transcripts / file-history
+  backups (data, not code), (d) `~/.claude/plugins/marketplaces/claude-plugins-official/**` which are external third-party
+  plugin-dev docs referencing a generic `/review` example unrelated to Matt's skill, or (e) an intentional forward-looking
+  prose reference inside `pr-preflight/SKILL.md` line 163 ("now-deleted `/review`"). Also noted: the system-reminder
+  skills list contains a Claude Code built-in `/review` ("Review a pull request") which is distinct from Matt's local
+  skill and will remain after deletion.
 
 #### Step B.2: Delete the `review/` skill directory
 
@@ -297,6 +305,10 @@ All seven merge. None were duplicative enough to drop. The salvage memo's analys
   `ls /Users/matthumanhealth/.claude/skills/review 2>&1` also returns "No such file or directory" (proves the symlink
   propagation).
 - **Complexity**: Small
+- **Status**: Complete. Pre-delete snapshot captured (`SKILL.md` 6450 bytes + `references/code-standards.md` 3733 bytes).
+  Post-delete: both `~/src/Panoply/skills/review` and `~/.claude/skills/review` return "No such file or directory" —
+  symlink propagation confirmed. The refreshed system-reminder skills list in this same session also dropped Matt's
+  local `/review` entry, leaving only the distinct Claude Code built-in `/review` ("Review a pull request").
 
 #### Step B.3: Update `README.md` skill inventory
 
@@ -313,6 +325,13 @@ All seven merge. None were duplicative enough to drop. The salvage memo's analys
   - `grep -c "| \`pr-preflight\` |" README.md` returns 1 (row added exactly once).
   - Visually inspect the table: row ordering is alphabetical, column alignment is preserved.
 - **Complexity**: Small
+- **Status**: Complete. Row-count greps: `review` row = 0, `pr-preflight` row = 1. Alphabetical slot corrected — plan
+  text said "between parallel-agents and pdf" but `pr-preflight` (p-r) actually sorts AFTER `pdf` (p-d) and before
+  `react-best-practices` (r-e), so placed between lines 158/160. Plan text had a minor alphabetising error; final table
+  order is correct. Count line "31 local skills" still accurate (net-zero change). Pre-existing drift noted but NOT
+  fixed (out of scope): README lists `wardley-mapping` but there is no corresponding `skills/wardley-mapping/` directory
+  on disk; conversely `skills/system-feedback/` exists and IS listed. Net list-vs-filesystem match for this plan stays
+  accurate post-edit.
 
 #### Step B.4: Post-delete breakage sweep
 
@@ -327,6 +346,14 @@ All seven merge. None were duplicative enough to drop. The salvage memo's analys
   5. No runtime errors during session startup from the deletion.
 - **Verify**: All five checks pass.
 - **Complexity**: Small
+- **Status**: Complete. (1) Refreshed system-reminder skills list (same session) no longer shows Matt's local `/review`;
+  only the Claude Code built-in `/review` ("Review a pull request") remains — distinct product, unaffected. (2)
+  `/pr-preflight` still present in skills list. (3) `/reviewing-code` and `/security-review` still present in skills
+  list. (4) RPI guardrail verified: `git diff HEAD -- agents/ skills/reviewing-code/ skills/security-review/` = empty,
+  and `git diff HEAD~1 -- agents/ skills/reviewing-code/ skills/security-review/` (relative to the pre-Phase-A tip
+  5d8fdd9) also = empty — both RPI bundles byte-unchanged across both Phase A and Phase B. Directories `agents/`,
+  `skills/reviewing-code/`, `skills/security-review/` confirmed to still exist on disk. (5) No runtime errors during
+  session; the skills-list refresh was clean.
 
 #### Step B.5: Commit Phase B and push
 
@@ -391,4 +418,4 @@ If only one half needs to revert (e.g. `pr-preflight` ships fine but README got 
 
 - [x] Plan approved
 - [x] Implementation started (Phase A complete 2026-04-17)
-- [ ] Implementation complete (Phase B pending)
+- [x] Implementation complete (Phase A commit a1d6dea + Phase B 2026-04-17)
