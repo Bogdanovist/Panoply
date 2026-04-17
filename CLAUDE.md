@@ -22,6 +22,12 @@ Before implementing any non-trivial task:
 2. Present the plan for my review
 3. Only proceed with implementation after I approve
 
+**RPI is the happy path for non-trivial work.** If a task shows any of these signals — touches multiple files,
+spans unfamiliar code, has ambiguous requirements, or is feature-shaped rather than one-liner-shaped — suggest
+`/research-plan-implement` upfront. It runs research, planning, and implementation as separate gated phases
+(each in its own context window), so you stay in control at every handoff. Defaulting to RPI beats realising
+mid-implementation that we needed research first.
+
 Use Plan Mode (Shift+Tab) for multi-step tasks. Always think through the full approach before writing code.
 
 ## Agent teams
@@ -46,6 +52,10 @@ If the user asks to "remember" something, save it to the appropriate location ab
 ## Auto-commit workflow
 
 Changes are automatically committed and pushed to GitHub by a Stop hook after each response. Do NOT ask about version control — it is handled automatically.
+
+**Before raising a PR, suggest `/pr-preflight`.** It runs the GitHub Claude review bot's prompt locally against
+the current branch and prints a PASS/WARN/BLOCK verdict to stdout — catching issues before they hit the PR. Ask
+the user once per session when a PR is about to be raised; don't nag.
 
 ## Data Science Projects
 

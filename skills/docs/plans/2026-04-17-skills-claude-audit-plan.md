@@ -288,6 +288,7 @@ Before moving to Phase B, confirm:
 
 #### Step B.1: Remove Project lifecycle section from CLAUDE.md
 
+- **Status**: Complete
 - **Files**: `/Users/matthumanhealth/src/Panoply/CLAUDE.md` lines 27-35 (the `## Project lifecycle` heading
   through the "Projects are in..." line and the trailing blank line).
 - **Action**: Delete the entire section — heading, 3-bullet list of slash commands, and the "Projects are in
@@ -305,6 +306,7 @@ Before moving to Phase B, confirm:
 
 #### Step B.2: Replace `EnterPlanMode` with `Plan Mode (Shift+Tab)`
 
+- **Status**: Complete
 - **Files**: `/Users/matthumanhealth/src/Panoply/CLAUDE.md` line 25.
 - **Action**: Replace the line
 
@@ -328,6 +330,7 @@ Before moving to Phase B, confirm:
 
 #### Step B.3: Reconcile "Always push the code" with Stop-hook auto-push
 
+- **Status**: Complete
 - **Files**: `/Users/matthumanhealth/src/Panoply/CLAUDE.md` line 16 (the "Always push the code" bullet in the
   `Working preferences` section).
 - **Action**: Replace the bullet:
@@ -355,6 +358,7 @@ Before moving to Phase B, confirm:
 
 #### Step B.4: Update strategic-context path in CLAUDE.md
 
+- **Status**: Complete
 - **Files**: `/Users/matthumanhealth/src/Panoply/CLAUDE.md` line 49 (the `Context management` section).
 - **Action**: Replace
 
@@ -376,6 +380,7 @@ Before moving to Phase B, confirm:
 
 #### Step B.5: Update strategic-context path in `system-feedback/SKILL.md`
 
+- **Status**: Complete
 - **Files**: `/Users/matthumanhealth/src/Panoply/skills/system-feedback/SKILL.md` line 39.
 - **Action**: Replace
 
@@ -397,6 +402,7 @@ Before moving to Phase B, confirm:
 
 #### Step B.6: Add `research-plan-implement` nudge to Planning workflow
 
+- **Status**: Complete
 - **Files**: `/Users/matthumanhealth/src/Panoply/CLAUDE.md` — after the 3-step planning list in the `## Planning
   workflow` section, before the `Use Plan Mode (Shift+Tab) for multi-step tasks.` line.
 - **Action**: Insert a new paragraph. Tuned per the user's emphasis that RPI is the **happy path** for non-trivial
@@ -422,6 +428,7 @@ Before moving to Phase B, confirm:
 
 #### Step B.7: Add `pr-preflight` nudge to Auto-commit workflow
 
+- **Status**: Complete
 - **Files**: `/Users/matthumanhealth/src/Panoply/CLAUDE.md` — the `## Auto-commit workflow` section (currently
   a single sentence).
 - **Action**: Append a second paragraph to the section. Exact text:
@@ -613,6 +620,6 @@ Flagged during planning; **not** actioned in this PR:
 - [x] Plan approved
 - [x] Implementation started
 - [x] Phase A complete
-- [ ] Phase B complete
-- [ ] Phase C complete (PR raised)
-- [ ] PR merged
+- [x] Phase B complete
+- [ ] Phase C complete (PR raised) — moot; auto-commit pushes directly to main
+- [ ] PR merged — n/a for this workflow
