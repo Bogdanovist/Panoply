@@ -179,6 +179,7 @@ Verdict: these are **real, used, strategic context**. They must be **relocated, 
 
 #### Step A.4: Trim `organise-repo/SKILL.md` Hubris section
 
+- **Status**: Complete
 - **Files**: `/Users/matthumanhealth/src/Panoply/skills/organise-repo/SKILL.md` (lines 27-36 as identified by
   audit; current file shows lines 27-36 as the "Check for Knowledge to Migrate" section + the blank line after).
 - **Action**: Remove lines 27-36 inclusive (the `### 2. Check for Knowledge to Migrate` heading, its prose, the
@@ -197,6 +198,7 @@ Verdict: these are **real, used, strategic context**. They must be **relocated, 
 
 #### Step A.5: Add `name:` frontmatter to `design-studio` and `retro`
 
+- **Status**: Complete
 - **Files**:
   - `/Users/matthumanhealth/src/Panoply/skills/design-studio/SKILL.md:1-4`
   - `/Users/matthumanhealth/src/Panoply/skills/retro/SKILL.md:1-5`
@@ -211,6 +213,7 @@ Verdict: these are **real, used, strategic context**. They must be **relocated, 
 
 #### Step A.6: Fix Phase A plan-doc contradiction
 
+- **Status**: Complete
 - **Files**: `/Users/matthumanhealth/src/Panoply/skills/docs/plans/2026-04-17-consolidate-review-skills-plan.md`
   line 218.
 - **Action**: Replace the single test-case line:
@@ -235,6 +238,7 @@ Verdict: these are **real, used, strategic context**. They must be **relocated, 
 
 #### Step A.7: Update `README.md` skill count and table
 
+- **Status**: Complete
 - **Files**: `/Users/matthumanhealth/src/Panoply/README.md`.
   - Line 75: `│   ├── skills/                         # 31 local skills`
   - Line 140: `31 local skills + 9 via plugin (40 total):`
@@ -606,9 +610,9 @@ Flagged during planning; **not** actioned in this PR:
 
 ## Status
 
-- [ ] Plan approved
-- [ ] Implementation started
-- [ ] Phase A complete
+- [x] Plan approved
+- [x] Implementation started
+- [x] Phase A complete
 - [ ] Phase B complete
 - [ ] Phase C complete (PR raised)
 - [ ] PR merged

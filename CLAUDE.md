@@ -13,7 +13,7 @@ Matt — Head of Customer at Human Health, a direct-to-consumer health app for c
 - **Decision visibility over permission gates.** Make decisions visible for async review rather than asking permission for every choice.
 - **Never skip tests.** If a test is failing or unrunnable, fix the underlying cause — fix the code, install the missing dependency, repair the environment configuration. Do NOT use `@pytest.mark.skip`, `@pytest.mark.skipif`, `pytest.skip()`, `xfail`, or any equivalent silencing mechanism to make a problem go away. Skipping is acceptable only when running the test is genuinely impossible in any environment (e.g., requires hardware that doesn't exist). If the environment is the problem, **the environment is what needs fixing, not the test**.
 - **Fix it while you're here. Never defer.** "Later" never happens — there is no backlog to store deferred cleanup in. When you spot something unrelated but broken, stale, or worse than it should be, fix it as part of the current change. Don't write out-of-scope sections that document "follow-up tickets." Always leave the codebase better than you found it. Exceptions: (1) things that are genuinely protected (e.g. `docs/decisions/`), (2) things whose scope would blow past the current task by a factor that makes review impossible. Default hard toward fixing.
-- **Always push the code.** Don't describe what you'll push, don't wait for a hook, don't assume auto-commit will pick it up. After making changes that are ready for review, `git push` is the last thing you do before responding. If the push fails (e.g. divergent branches), resolve and push — don't leave it for me to chase.
+- **Always push the code.** The Stop hook auto-commits and pushes after every response as a safety net — don't rely on it. When you're in-session and have changes ready for review, `git push` is the last thing you do before responding. If the push fails (e.g. divergent branches), resolve and push — don't leave it for me to chase.
 
 ## Planning workflow
 
@@ -22,16 +22,7 @@ Before implementing any non-trivial task:
 2. Present the plan for my review
 3. Only proceed with implementation after I approve
 
-Use EnterPlanMode for multi-step tasks. Always think through the full approach before writing code.
-
-## Project lifecycle
-
-Use these skills to manage structured projects:
-- `/refine-project [name]` — Refine an intent document through interactive discussion
-- `/design-project [name]` — Create a solution design from a refined intent
-- `/complete-project [name]` — Review, promote specs, run retro, and archive
-
-Projects are in `~/src/Panoply/projects/`. Each has intent.md, backlog.md, mapping.yaml, and optionally design.md.
+Use Plan Mode (Shift+Tab) for multi-step tasks. Always think through the full approach before writing code.
 
 ## Agent teams
 
@@ -46,7 +37,7 @@ Use agent teams for tasks that benefit from parallel work:
 Do not save context to Claude Code's auto memory system. All persistent context goes into version-controlled locations:
 
 - **Repo-specific conventions/rules** → that repo's `.claude/rules/` directory
-- **Strategic/domain context** → `~/src/Panoply/skills/refine-project/references/`
+- **Strategic/domain context** → `~/src/Panoply/strategic-context/`
 - **Project-specific context** → `~/src/Panoply/projects/{name}/`
 - **General working preferences** → this file (CLAUDE.md)
 

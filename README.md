@@ -72,7 +72,7 @@ dotfiles-claude/
 ├── hooks/
 │   ├── auto-commit-push.sh         # Stop hook: auto-commit + push
 │   └── pre-commit-secrets-check.sh # Git hook: blocks secrets from commits
-├── skills/                         # 31 local skills
+├── skills/                         # 27 local skills
 ├── agents/                         # 7 local agents
 ├── setup.sh                        # One-command installer
 └── LICENSE                         # MIT
@@ -137,7 +137,7 @@ This means installing a skill, tweaking a setting, or adding a hook is automatic
 
 ## Skills
 
-31 local skills + 9 via plugin (40 total):
+27 local skills + 9 via plugin (36 total):
 
 ### Local skills (in `skills/`)
 
@@ -145,8 +145,6 @@ This means installing a skill, tweaking a setting, or adding a hook is automatic
 |---|---|
 | `article-extractor` | Extract clean content from URLs |
 | `brainstorming` | Collaborative design dialogue before research/planning |
-| `complete-project` | Review, archive and retrospect completed projects |
-| `design-project` | Produce a solution design from a refined intent |
 | `design-studio` | Interactive Streamlit design studio with hot-reload |
 | `documenting-decisions` | Record ADRs in `docs/decisions/` |
 | `end-session` | CI checks + push + PR on session exit |
@@ -159,7 +157,6 @@ This means installing a skill, tweaking a setting, or adding a hook is automatic
 | `pr-preflight` | Local mirror of the GitHub Claude review bot — runs the five-axis review prompt against the current branch and prints a PASS/WARN/BLOCK verdict to stdout |
 | `react-best-practices` | Vercel's React/Next.js performance patterns |
 | `receiving-code-review` | Verification-first response to review feedback |
-| `refine-project` | Interactive refinement of a project intent document |
 | `research-plan-implement` | End-to-end RPI pipeline via parallel subagents |
 | `researching-codebase` | Thorough codebase exploration through dialogue |
 | `retro` | Retrospective on code quality, context, and conventions |
@@ -171,7 +168,6 @@ This means installing a skill, tweaking a setting, or adding a hook is automatic
 | `systematic-debugging` | Root-cause investigation for failures and bugs |
 | `test-driven-development` | Rigorous RED-GREEN-REFACTOR discipline |
 | `verification-before-completion` | Evidence-before-claims for implementation completion |
-| `wardley-mapping` | Strategic Wardley map creation |
 | `writing-plans` | Transform research into actionable implementation plans |
 | `xlsx` | Create/analyse spreadsheets |
 

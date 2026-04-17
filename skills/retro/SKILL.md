@@ -1,4 +1,5 @@
 ---
+name: retro
 description: Run a retrospective — review code quality across the repo, audit context health, and ensure the right rules and conventions are in place. Use periodically to keep the codebase and tooling healthy.
 argument-hint: "[repo-name]"
 user_invocable: true

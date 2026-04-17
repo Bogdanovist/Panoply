@@ -1,4 +1,5 @@
 ---
+name: design-studio
 description: Launches an interactive Streamlit design studio with hot-reload. Use when iteratively designing or improving a Streamlit dashboard page with immediate visual feedback.
 user_invocable: true
 ---

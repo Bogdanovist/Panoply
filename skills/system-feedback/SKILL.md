@@ -36,7 +36,7 @@ Reference these locations when diagnosing or making changes:
 | Hooks | `~/src/Panoply/hooks/` |
 | Settings | `~/src/Panoply/settings.json` |
 | Global instructions | `~/src/Panoply/CLAUDE.md` |
-| Context references | `~/src/Panoply/skills/refine-project/references/` |
+| Context references | `~/src/Panoply/strategic-context/` |
 
 ## Guidelines
 

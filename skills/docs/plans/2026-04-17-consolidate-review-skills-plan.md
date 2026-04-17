@@ -215,7 +215,9 @@ All seven merge. None were duplicative enough to drop. The salvage memo's analys
   - File contains the literal string `SPEC:`.
   - File does NOT contain `gh pr review --comment` or `mcp__github_inline_comment` — these must be removed in
     favour of stdout output.
-  - File does NOT contain `intent.md`, `design.md`, or `architecture.md` — these were dropped intentionally.
+  - File contains the literal string `intent.md` only inside the scope-guardrails section (confirms the
+    guardrail names the file explicitly). File does NOT contain any `!`-include or `cat` shell command reading
+    `intent.md`, `design.md`, or `architecture.md`.
 - **Verify**: Each of the above grep-level checks passes (implementer can run a single `grep -l` sweep).
 - **Complexity**: Medium (mostly transcription + careful substitution; the salvage-merge integration is the only real
   judgement call, and the merge points are specified above)
