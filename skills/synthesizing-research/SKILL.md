@@ -35,6 +35,9 @@ Read each research file completely. Note:
 - Overlapping or contradictory information
 - Gaps — topics mentioned but not investigated
 - Confidence levels stated by each researcher
+- Evidence type markers ([OBSERVED] backed by runtime evidence; [INFERRED] read off source only)
+
+Preserve these tags through synthesis — do not silently upgrade `[INFERRED]` claims to unqualified statements just because multiple researchers repeat them.
 
 ### 3. Organize by Theme
 
@@ -45,6 +48,7 @@ Themes to look for:
 
 - Architecture and design patterns
 - Data flow and state management
+- Runtime evidence and observed behaviour (query outputs, log excerpts, CLI output)
 - External dependencies and APIs
 - Security and performance considerations
 - Testing patterns and coverage
@@ -77,6 +81,15 @@ Create the synthesis at: `docs/plans/YYYY-MM-DD-<topic>-research.md`
 
 [Continue for each theme...]
 
+## Runtime Evidence
+
+[Observations captured by running code, querying data, or reading
+logs during research. Each entry names the command or query, the
+trimmed raw output, and the conclusion drawn. Claims elsewhere in
+this document that are backed by an entry here are tagged
+[OBSERVED]; claims not backed by runtime evidence are tagged
+[INFERRED].]
+
 ## External Research
 
 [Findings from web research with source citations and confidence
@@ -96,9 +109,9 @@ assessments]
 
 ## Sources
 
-| Document | Researcher | Focus Area |
-| -------- | ---------- | ---------- |
-| [path]   | [agent]    | [scope]    |
+| Document | Researcher | Focus Area | Evidence Type |
+| -------- | ---------- | ---------- | ------------- |
+| [path]   | [agent]    | [scope]    | [static \| runtime \| mixed] |
 ```
 
 ### 5. Validate and Present

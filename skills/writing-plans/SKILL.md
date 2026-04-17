@@ -144,6 +144,31 @@ Include edge cases and boundary conditions:
 - Error paths (invalid input, network failure, permission denied)
 - Concurrency or ordering concerns when relevant
 
+#### Handling `[INFERRED]` findings from research
+
+If the research document tags a finding `[INFERRED]` (read off source
+code without runtime confirmation) and an implementation step depends
+on that finding being true, insert a verification step immediately
+before the dependent step. The verification step runs code, queries
+data, or reads logs to confirm the inferred claim. Findings tagged
+`[OBSERVED]` are already backed by runtime evidence and do not need a
+verification step.
+
+Concrete forms the verification step can take, by domain:
+
+- **Data pipelines**: query the relevant table or asset, inspect
+  schema, sample rows, compare actual shape against the inferred
+  shape.
+- **Production services**: hit the relevant endpoint or tail logs for
+  a representative request; confirm the inferred behaviour appears in
+  the output.
+- **CLI / local tools**: run the binary with a representative input;
+  capture stdout/stderr and the exit code; compare against the
+  inferred behaviour.
+
+If verification contradicts the inferred claim, stop and return to
+research — do not patch over a broken assumption in the plan.
+
 #### Good Task Examples
 
 ```markdown

@@ -70,11 +70,12 @@ Do NOT use when:
 
 ### Step 1: Define Research Questions
 
-Before spawning subagents, break the feature into independent research questions. Typically 2-3 questions covering:
+Before spawning subagents, break the feature into independent research questions. Typically 2-4 questions covering:
 
 - **Codebase context**: How does the relevant code work today?
 - **External context**: What APIs, libraries, or patterns are involved?
 - **Security/performance**: Are there concerns to investigate?
+- **Observed behaviour**: What does the system actually do at runtime today — query outputs, log patterns, CLI output?
 
 ### Step 2: Spawn Research Subagents
 
@@ -94,7 +95,13 @@ Spawn a subagent with the Agent tool:
    and args: '[feature area]'
 2. Follow the skill's full methodology (interrogation, exploration,
    documentation)
-3. Write your findings to docs/plans/YYYY-MM-DD-<topic>-codebase.md"
+3. Where the research question concerns current runtime behaviour
+   (data shape, log patterns, CLI output), gather runtime evidence
+   per the 'Gather Runtime Evidence (When Applicable)' subsection
+   of the researching-codebase skill. Tag findings inline
+   [OBSERVED] (backed by runtime evidence) or [INFERRED] (read
+   off source only).
+4. Write your findings to docs/plans/YYYY-MM-DD-<topic>-codebase.md"
 ```
 
 **Web researcher (when external context needed):**
@@ -109,6 +116,8 @@ practice].
 Provide findings with source citations and confidence assessment.
 Write your findings to docs/plans/YYYY-MM-DD-<topic>-external.md"
 ```
+
+Note: state inspection is NOT a separate subagent — the codebase-researcher above handles it via the runtime-evidence subsection of researching-codebase.
 
 **Additional subagents (when needed):**
 
