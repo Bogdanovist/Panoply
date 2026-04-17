@@ -24,33 +24,22 @@ cat CLAUDE.md 2>/dev/null
 
 Report what exists and what's missing.
 
-### 2. Check for Knowledge to Migrate
-
-If legacy Hubris repo knowledge exists, offer to migrate it:
-
-```bash
-REPO=$(basename -s .git $(git remote get-url origin 2>/dev/null))
-cat ~/src/hubris/repos/$REPO/knowledge.md 2>/dev/null
-```
-
-If content is found, offer to migrate it into `.claude/rules/knowledge.md`.
-
-### 3. Review CLAUDE.md
+### 2. Review CLAUDE.md
 
 Check if the repo has a `CLAUDE.md`. If not, offer to create one with repo-specific conventions based on what you learn from reading the codebase (language, framework, test runner, build system, key directories).
 
-### 4. Rules Assessment
+### 3. Rules Assessment
 
 Check `.claude/rules/` for:
 - Domain-specific gotchas that should have rule files but don't
 - Existing rules that are stale, too broad, or redundant with what Claude already knows
 - Opportunities for path-scoped rules (e.g., API conventions only loaded when editing API files)
 
-### 5. Recommend Improvements
+### 4. Recommend Improvements
 
 Based on the audit, suggest specific additions, updates, or removals. Present each recommendation with rationale.
 
-### 6. Implement
+### 5. Implement
 
 After the user approves recommendations, make the changes. Ask before each modification.
 
