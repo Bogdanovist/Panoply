@@ -484,5 +484,5 @@ records that decision explicitly in the skill file so it does not have to be red
 - [x] Phase 2 complete (synthesizing-research checklist + themes + template + Sources table)
 - [x] Phase 3 complete (research-plan-implement question defaults + codebase-researcher prompt + orientation note)
 - [x] Phase 4 complete (writing-plans `[INFERRED]` handling subsection)
-- [ ] Cross-phase consistency checks pass
-- [ ] Implementation complete
+- [x] Cross-phase consistency checks pass
+- [x] Implementation complete
