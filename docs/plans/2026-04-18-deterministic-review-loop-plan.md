@@ -319,6 +319,8 @@ Manual walk-through against a hypothetical 4-phase research doc (one heavy ~70%-
 
 ### Phase 6: RPI orchestrator updates
 
+**Status: Complete** — `skills/research-plan-implement/SKILL.md` rewritten end-to-end to consume the new review_group contract: (a) the architecture diagram now shows `base_ref` recorded before Phase 3 and the terminal security-gate as a distinct pipeline stage; (b) Phase 3 is reframed as "one implementer per review_group" with a new Step 0 recording `base_ref = HEAD`, a Step 1 that refuses plans missing `review_group` or the terminal `security-gate`, a Step 2 that enumerates the three group shapes (Solo / Batched sequential / Fan-out + consolidator) and documents gate exit codes 0/42/other; (c) the implementer-spawn prompt at the old lines ~280–309 no longer says "run code review and security review at phase completion" — it now says invoke `implement-review-gate.sh` once per group and explicitly forbids per-group security review; (d) a new Step 4 encodes the terminal security-gate flow (spawn security-reviewer with `$base_ref..HEAD` + plan + phase list; read `.review-verdict-security`; remediate via `implement-review-gate.sh --group-id security`; `AskUserQuestion` on cap-hit); (e) the old Step 4 "Reviews: [code review, security review per phase]" rollup line is fixed to "per-group code-review verdicts, terminal security-gate verdict"; (f) Orchestrator Rules now explicitly list `base_ref` capture, reading sentinel files, and the terminal-gate → finishing-work handoff, and explicitly forbid invoking `implement-review-gate.sh` from the orchestrator (the per-group implementer does); (g) the Anti-Patterns table rewritten from "per phase" to "per review_group" and extended with two new rows (terminal-gate-not-per-group; gate-invoked-by-implementer-not-orchestrator); (h) Quality Checklist updated with six new items covering `review_group` presence, terminal gate presence, `base_ref` capture, per-group gate invocation, no-security-per-group, and terminal-gate-ran-exactly-once. Stale per-phase security-review language at the old lines ~299 and ~335 flagged by P4 is now gone.
+
 **Execution**
 
 - **Scope:** Update `research-plan-implement/SKILL.md` so the orchestrator reads `review_group` from plans, spawns one implementer per group (using the Solo/Batched/Consolidator shape), records `base_ref` at plan start, and runs the terminal security-gate phase once.
@@ -440,7 +442,13 @@ Full rollback = revert the feature branch merge commit on main; sub-PR granulari
 
 - [x] Plan approved
 - [x] Implementation started
-- [ ] Implementation complete
+- [x] Implementation complete
+
+### Phase 6 — Complete (autonomous gate per plan)
+
+- 6.1 — Orchestrator control flow encoded in `skills/research-plan-implement/SKILL.md`: Step 0 records `base_ref = HEAD` before first implementer spawn; Step 1 refuses plans missing `review_group` or the terminal `security-gate`; Step 2 enumerates Solo / Batched sequential / Fan-out + consolidator shapes and documents gate exit codes 0/42/other; Step 4 drives the terminal security-gate (spawn security-reviewer over `$base_ref..HEAD`, read `.review-verdict-security`, remediate via `implement-review-gate.sh --group-id security`, `AskUserQuestion` on cap-hit); Step 5 rollup lists per-group code-review verdicts + terminal security-gate verdict.
+- 6.2 — Uniform-gate language removed: the implementer-spawn prompt no longer says "run code review and security review at phase completion"; Anti-Patterns table rewritten from per-phase to per-review_group framing and extended with two rows forbidding per-group security review and orchestrator-invoked gate script. Stale lines ~299 and ~335 (per-phase security) flagged by P4 are gone.
+- 6.3 — End-to-end fixture dry-run deferred to a post-merge follow-up session (no fixture plan exists on disk yet); the skill-level control flow is verified by structural read-through against the P1 gate contract, P2 planner shapes, P3 per-phase wiring, and P4 terminal-phase template. All plan Success Criteria rows are covered by the P1–P6 surface as landed.
 
 ### Phase 5 — Complete (pending human review gate)
 
