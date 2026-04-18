@@ -157,6 +157,25 @@ Print the report to stdout in exactly this structure. Do not call `gh pr review`
 
 ---
 
+## Sentinel write on PASS (hook contract)
+
+On a **PASS** verdict — and only on PASS — write a sentinel file at the repo root so the `pr-preflight-gate` `PreToolUse` hook allows the subsequent `gh pr create`:
+
+```bash
+touch "$(git rev-parse --show-toplevel)/.pr-preflight-passed"
+```
+
+Rules:
+
+- **PASS only.** Do not write the sentinel on WARN or BLOCK. Surface findings and stop.
+- **Repo root, not CWD.** Always resolve via `git rev-parse --show-toplevel` so the hook finds it regardless of which subdirectory Matt runs `gh pr create` from.
+- **15-minute staleness.** The hook requires the sentinel's mtime to be within the last 900 seconds. If Matt delays raising the PR past that window, the hook will block and ask for a re-run — this is intentional, so the review reflects the current diff.
+- **Do not pre-create or touch on retry.** If the first run produced WARN/BLOCK and a second run produces PASS, the second run writes the sentinel fresh at that moment. Never write the sentinel to "skip" the hook.
+
+The hook source of truth lives at `~/.claude/hooks/pr-preflight-gate.sh` and is registered in `~/.claude/settings.json` under `hooks.PreToolUse`. Escape hatch for rare overrides: `PR_PREFLIGHT_SKIP=1 gh pr create ...` (logged to `~/.claude/logs/pr-preflight-skips.log`).
+
+---
+
 ## Scope guardrails
 
 - This skill does NOT replace the RPI `code-reviewer` / `security-reviewer` agents. Those run during implementation as soft/hard gates inside `implementing-plans` Step 8. `pr-preflight` is the pre-push local mirror of the GitHub `@claude` review bot. Different timing, different phase — both remain useful.

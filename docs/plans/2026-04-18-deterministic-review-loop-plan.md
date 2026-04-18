@@ -427,6 +427,13 @@ Full rollback = revert the feature branch merge commit on main; sub-PR granulari
 
 ## Status
 
-- [ ] Plan approved
-- [ ] Implementation started
+- [x] Plan approved
+- [x] Implementation started
 - [ ] Implementation complete
+
+### Phase 5 — Complete (pending human review gate)
+
+- 5.1 — Hook script authored at `~/src/Panoply/hooks/pr-preflight-gate.sh` (chmod +x). All 9 enumerated test cases verified manually with a temp git repo fixture (missing / fresh / stale sentinel; `gh pr view` ignored; `gh pr createsomething` word-boundary ignored; absolute path intercepted; quoted `"gh"` intercepted; `PR_PREFLIGHT_SKIP=1` allows + logs).
+- 5.2 — `~/src/Panoply/skills/pr-preflight/SKILL.md` updated with a "Sentinel write on PASS (hook contract)" section specifying repo-root write, PASS-only, 15-minute staleness.
+- 5.3 — `~/src/Panoply/settings.json` now registers the hook under `hooks.PreToolUse` with matcher `Bash`.
+- 5.4 — **Pending explicit human review gate** (plan requirement). User must read the diff of `settings.json` and the hook script before merge.
