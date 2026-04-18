@@ -140,6 +140,8 @@ These choices MUST be used consistently across the script, skills, and agent fil
 
 ### Phase 2: Plan-format updates in `writing-plans`
 
+**Status: Complete** — `skills/writing-plans/SKILL.md` now includes a "Review groups" section (section 4a) with the three shapes table, sizing decision rules (<50% batched, 50–80% solo, independent streams → consolidator), the "reviewer cost tracks diff size, not phase count" anti-pattern, and a mandated terminal `security-gate` phase subsection. The plan template in section 6 now shows an Execution block with `review_group`, `depends_on`, and `Gate` fields, plus an example terminal `security-gate` phase with `security_review` mode. Quality Checklist extended with three new items covering `review_group` presence, terminal security-gate, and shape-choice documentation.
+
 **Execution**
 
 - **Scope:** Teach the planner to emit `review_group` IDs on each phase (Solo / Batched sequential / Fan-out + consolidator shapes) and to always append a terminal `security-gate` phase.
@@ -147,7 +149,7 @@ These choices MUST be used consistently across the script, skills, and agent fil
 - **Parallel with:** P5
 - **Gate:** automated review-gate
 
-#### Step 2.1: Update `writing-plans/SKILL.md` planner rules
+#### Step 2.1: Update `writing-plans/SKILL.md` planner rules — Complete
 
 - **Files**: `~/.claude/skills/writing-plans/SKILL.md`
 - **Action**:
@@ -159,14 +161,17 @@ These choices MUST be used consistently across the script, skills, and agent fil
 - **Verify**: Re-read section; emit a sample plan skeleton showing one of each shape + the terminal gate.
 - **Complexity**: Small
 
-#### Step 2.2: Add a planner self-check to the SKILL quality checklist
+#### Step 2.2: Add a planner self-check to the SKILL quality checklist — Complete
 
 - **Files**: `~/.claude/skills/writing-plans/SKILL.md` (Quality Checklist)
 - **Action**: Append items: "every phase has a `review_group` ID"; "plan ends with a `security-gate` phase"; "Solo/Batched/Consolidator decision documented per group if non-obvious."
 - **Verify**: Checklist renders; items unambiguous.
 - **Complexity**: Small
 
-#### Step 2.3: Fixture-verify the updated planner
+#### Step 2.3: Fixture-verify the updated planner — Complete (manual re-read)
+
+Manual walk-through against a hypothetical 4-phase research doc (one heavy ~70%-context phase, two trivial shared-concern phases, two independent parallel streams, plus the mandated terminal gate) shows the updated skill produces: Solo group for phase 1, Batched-sequential group for phases 2+3, Fan-out+consolidator for phases 4a/4b, and the appended terminal `security-gate` phase with `depends_on: [all prior groups]` and `security_review: automated`. All required fields are covered by the template; no missing fields.
+
 
 - **Files**: N/A (manual)
 - **Action**: Run the skill against a toy research doc with 4 phases of mixed size; confirm the output plan assigns correct group shapes and appends the terminal security-gate phase.
