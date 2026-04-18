@@ -49,6 +49,11 @@ Before planning tasks, establish what "done" looks like:
 
 Use AskUserQuestion to clarify requirements if needed.
 
+**Verification beyond CI** — if the brainstorming design doc declared post-merge verification (or if brainstorming was
+skipped, ask now): capture the scripts, access requirements, repos involved, and trigger point in the
+`## Post-Merge Verification` section of the plan template below. Default answer "CI is enough" is valid and common;
+state it explicitly rather than leaving the section unfilled.
+
 ### 3. Classify Stakes
 
 Determine implementation risk level:
@@ -454,6 +459,18 @@ concurrently. Omit this annotation for sequential phases.]
 - [ ] [Manual check description and steps]
 - [ ] [Manual check description and steps]
 
+## Post-Merge Verification
+
+**Required**: yes | no   *(if no, leave remaining fields blank or delete)*
+**Trigger point**: [e.g. "after PR merges to main", "after `terraform apply` completes in staging", "after downstream
+repo's CI passes on the consuming change"]
+**Repos involved**: [list any repos beyond this one; use `none` for same-repo work]
+**Commands / steps**:
+- [ ] [concrete command or action, with access requirement noted]
+- [ ] [concrete command or action]
+**Verification owner**: [who runs this — Matt manually / Claude in a new session with access to repo X / downstream
+repo CI]
+
 ## Risks and Mitigations
 
 | Risk   | Impact   | Mitigation       |
@@ -552,3 +569,4 @@ Before requesting approval:
 - [ ] Every phase's Execution block includes a `review_group: <id>` field
 - [ ] Plan ends with a terminal `security-gate` phase (`depends_on: [all prior groups]`, `review_group: security`, `security_review` mode set)
 - [ ] For each group, the Solo / Batched-sequential / Fan-out+consolidator shape choice is recorded inline when non-obvious
+- [ ] Post-Merge Verification section filled in (either `Required: no`, or `Required: yes` with trigger point, commands, and owner)
