@@ -303,6 +303,29 @@ before implementer); only on CHANGES does it spawn a remediation implementer, su
 per-phase gate. Plan authors do not encode that control flow — it lives in `research-plan-implement` — but the
 terminal phase's presence and fields are the planner's responsibility.
 
+**Terminal-phase control-flow contract** (planner copies this verbatim into the terminal phase's Execution block so
+readers of the plan understand what runs without needing to cross-reference the orchestrator):
+
+1. Orchestrator records `base_ref = HEAD` at plan start, then runs prior groups in dependency order.
+2. After the last prior group, orchestrator invokes `security-reviewer` once with inputs:
+   `git diff $base_ref..HEAD`, the plan document path, and the ordered list of prior phase names.
+   **Do NOT pipe per-phase reviewer summaries** — the aggregated diff is the source of truth.
+3. Reviewer writes `.review-verdict-security` per the sentinel contract (`REVIEW_APPROVED` on PASS, bulleted findings
+   on CHANGES).
+4. **On PASS** → orchestrator proceeds to `finishing-work` (no implementer is spawned for this phase).
+5. **On CHANGES** → orchestrator spawns a remediation implementer and re-enters the gate via
+   `implement-review-gate.sh --group-id security` (reviewer-cmd = security-reviewer). The 2-pass cap applies.
+6. **On cap-hit (exit 42)** → orchestrator surfaces both rounds of findings and triggers `AskUserQuestion` with
+   options: **remediate** (interactive human-in-the-loop), **override** (logged and proceeds to `finishing-work`),
+   **abort** (stop; no `finishing-work`).
+7. `security_review: human` plans skip the automated reviewer entirely and go straight to the `AskUserQuestion`
+   handoff with the aggregated diff. `security_review: hybrid` runs the automated reviewer first, then ALWAYS
+   triggers the `AskUserQuestion` handoff regardless of PASS/CHANGES outcome.
+
+Planner default is `automated`; escalate to `hybrid` for any plan touching auth, session, data access, cryptographic
+material, production credentials, or user-visible privacy surfaces. Reserve `human` for changes where the diff is
+inherently non-reviewable by a language model (e.g. large binary asset updates).
+
 ### 5. Document Risks
 
 Identify what could go wrong:
@@ -396,11 +419,26 @@ concurrently. Omit this annotation for sequential phases.]
 
 **Execution**
 
-- **Scope:** Plan-level security review over the aggregated diff
+- **Scope:** Plan-level security review over the aggregated diff (`git diff $base_ref..HEAD`)
 - **Depends on:** [all prior review_group ids]
+- **Parallel with:** none (terminal)
 - **review_group:** `security`
-- **security_review:** `automated` *(or `human` / `hybrid` for high-stakes plans)*
-- **Gate:** automated review-gate (reviewer runs first; remediation spawns an implementer on CHANGES)
+- **security_review:** `automated` *(or `human` / `hybrid` for high-stakes plans — auth / data / architectural)*
+- **Gate:** automated review-gate (reviewer runs first; remediation implementer spawns only on CHANGES; 2-pass cap
+  with interactive drop-out)
+
+**Reviewer inputs** (orchestrator-supplied; do NOT pipe per-phase reviewer summaries):
+
+1. `git diff $base_ref..HEAD` — aggregated diff; `$base_ref` = HEAD recorded at plan start.
+2. Plan document path (this file).
+3. Ordered list of prior phase names for scope orientation.
+
+**Control flow:**
+
+- Reviewer writes `.review-verdict-security` per the sentinel contract.
+- **PASS** → proceed to `finishing-work`.
+- **CHANGES** → spawn remediation implementer; re-enter via `implement-review-gate.sh --group-id security`.
+- **Cap-hit (exit 42)** → `AskUserQuestion`: remediate / override (logged) / abort.
 
 ## Test Strategy
 

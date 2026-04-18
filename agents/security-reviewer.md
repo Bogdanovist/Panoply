@@ -143,11 +143,48 @@ does a byte-exact comparison, so the contents matter precisely.
 - Do NOT skip writing the sentinel on PASS — the gate treats a missing
   sentinel as a reviewer crash and exits non-zero.
 
-**Plan-level mode note:** when invoked as the terminal security-gate
-phase (introduced in Phase 4), the same contract applies, but the input
-is the plan-aggregated diff (`git diff $base_ref..HEAD`) plus the plan
-document path. The sentinel path is still `REVIEW_SENTINEL` if exported
-by the gate.
+## Plan-level mode (terminal `security-gate` phase)
+
+When this agent is invoked as the terminal `security-gate` phase of an
+RPI plan (rather than as a per-phase reviewer), the review unit is the
+**aggregated diff for the entire plan**, not any single phase's
+changes. The verdict contract above is unchanged; only the inputs and
+scope differ.
+
+**Inputs (supplied by the orchestrator):**
+
+1. **Aggregated diff** — `git diff $base_ref..HEAD`, where `$base_ref`
+   is the commit SHA recorded by the orchestrator at plan-start. This
+   diff is the authoritative review unit.
+2. **Plan document path** — absolute path to the plan markdown (e.g.
+   `docs/plans/YYYY-MM-DD-<topic>-plan.md`). Read it for intent,
+   stakes classification, and documented risks.
+3. **Phase-name list** — ordered list of the plan's phase names, to
+   orient review scope (e.g. "phases 1–3 touched auth; phase 4 added a
+   migration").
+
+**Explicitly NOT an input:** per-phase reviewer summaries. Do not ask
+for them, do not accept them if piped in — the aggregated diff is the
+source of truth and per-phase summaries encourage drift between what
+was reviewed and what shipped.
+
+**Scope:**
+
+- Review the aggregated diff end-to-end using the categorisation and
+  checklist in `## Review Process` above.
+- Focus on cross-phase interactions that no per-phase reviewer could
+  have seen (e.g. phase 1 adds a field that phase 4 exposes over an
+  API without validation).
+- Ignore pre-existing code outside the diff unless the diff changes
+  its trust boundary.
+
+**Sentinel:**
+
+- Default group id is `security`; absent `REVIEW_SENTINEL`, write to
+  `.review-verdict-security` at the repo root.
+- On PASS → write exactly `REVIEW_APPROVED` per the contract above.
+- On CHANGES → write bulleted findings; the orchestrator will spawn a
+  remediation implementer subject to the 2-pass cap.
 
 ## Verdict Guidelines
 

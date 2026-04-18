@@ -63,7 +63,7 @@ Follow the 9-step workflow from `reviewing-code` skill:
 3. **Evaluate correctness** - Edge cases, error handling, assumptions
 4. **Evaluate design** - Patterns, architecture, SOLID principles
 5. **Evaluate tests** - TDD quality, coverage, isolation
-6. **Evaluate security** - Lightweight; flag for security-reviewer
+6. **Evaluate security** - Lightweight; flag for the terminal plan-level `security-reviewer` (not per-phase)
 7. **Evaluate operability** - Logging, metrics, error messages
 8. **Evaluate maintainability** - Readability, coupling, naming
 9. **Provide feedback** - Conventional Comments with principle attribution
@@ -116,7 +116,7 @@ Produce report using `reviewing-code` skill format:
 
 Provide clear verdict with rationale:
 
-**APPROVE**: No blocking issues. Code is ready for security review.
+**APPROVE**: No blocking issues. Code is ready to proceed past this per-phase gate. (Security review is NOT run per phase — it happens once at plan end via the terminal `security-gate` phase.)
 
 **APPROVE WITH NITS**: Only non-blocking suggestions. Proceed at author's discretion.
 
@@ -183,12 +183,12 @@ Summarize the review:
 
 **APPROVE**: No blocking issues
 
-- Proceed to security review
+- Proceed past this per-phase gate to the next phase (or to the terminal `security-gate` phase if this is the last prior group)
 - Note any minor items for awareness
 
 **APPROVE WITH NITS**: No blocking issues, only suggestions
 
-- Proceed to security review
+- Proceed past this per-phase gate
 - Suggestions are optional improvements
 
 **REQUEST CHANGES**: Blocking issues found
@@ -212,7 +212,7 @@ Summarize the review:
 - Focus on changes, not pre-existing issues
 - Consider the context of changes (what was the intent?)
 - Flag patterns even if not immediately problematic
-- Security concerns noted here will be examined by security-reviewer
+- Security concerns noted here will be examined by `security-reviewer` at the terminal plan-level `security-gate` phase (not per-phase)
 - This is a soft gate - user retains final decision authority
 
 Begin by identifying the files changed during implementation.
