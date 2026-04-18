@@ -258,6 +258,51 @@ research — do not patch over a broken assumption in the plan.
 **Problem**: No test cases enumerated, test and implementation combined into one step. Without explicit test cases, the
 implementer writes tests after the code — losing TDD discipline
 
+### 4a. Assign Review Groups
+
+Every phase's Execution block MUST carry a `review_group: <id>` field. The planner (not the orchestrator or the
+implementer) decides how phases cluster into review groups, because the clustering decision depends on context budget
+and semantic coupling — information the planner has but runtime code flow does not.
+
+The review loop requires a **single author for the diff under review**. That constraint drives the three permitted
+shapes:
+
+| Shape | When to use | Who owns the review loop |
+| ----- | ----------- | ------------------------ |
+| **Solo** — 1 phase = 1 group | Phase is meaty (estimated implementer context 50–80%) | That phase's implementer |
+| **Batched sequential** — N small phases, 1 group | Each phase trivial; combined estimated context <50% and phases share a concern | A single implementer does all N phases, then invokes the gate once |
+| **Fan-out + consolidator** — parallel phases, 1 group | Two+ genuinely independent streams, each comfortably under budget | A consolidator implementer owns the aggregated diff and invokes the gate once |
+
+**Sizing decision rules (apply per group):**
+
+- Estimated implementer context <50% **and** phases share a concern → **Batched sequential**
+- Estimated implementer context 50–80% → **Solo**
+- Two+ independent streams, each comfortably under budget → **Fan-out + consolidator**
+- If a single phase alone is already near or above 80% of context budget, it is a sign the phase itself is too large —
+  split the phase before assigning a group.
+
+**Anti-pattern:** do NOT split groups to "save reviewer compute". Reviewer cost is bounded by diff size, not phase
+count. Splitting a coherent diff across multiple groups costs more review time, not less, because each reviewer run
+re-reads shared context.
+
+**When the shape choice is non-obvious** (e.g., two phases that look related but could go Solo+Solo or Batched), note
+the decision and its rationale inline in the Execution block so reviewers of the plan can audit it.
+
+#### Terminal `security-gate` phase (always append)
+
+Every plan MUST end with a terminal `security-gate` phase. This phase replaces per-phase security review: one
+reviewer run at end-of-plan over the aggregated diff. Its Execution block requires these fields:
+
+- `depends_on: [<all prior review_group ids>]`
+- `review_group: security`
+- `security_review: automated | human | hybrid` — default `automated`; escalate to `hybrid` for high-stakes plans
+  (auth, data, architectural change, anything touching production credentials or user-visible privacy surfaces).
+
+The orchestrator runs the terminal gate by invoking `security-reviewer` first (inverting the usual order — reviewer
+before implementer); only on CHANGES does it spawn a remediation implementer, subject to the same 2-pass cap as the
+per-phase gate. Plan authors do not encode that control flow — it lives in `research-plan-implement` — but the
+terminal phase's presence and fields are the planner's responsibility.
+
 ### 5. Document Risks
 
 Identify what could go wrong:
@@ -310,6 +355,14 @@ Use this structure:
 
 ### Phase 1: [Phase Name]
 
+**Execution**
+
+- **Scope:** [One-line summary of what this phase accomplishes]
+- **Depends on:** [prior review_group ids, or `none`]
+- **Parallel with:** [other review_group ids, or `none`]
+- **review_group:** `<id>` *(Solo / Batched sequential / Fan-out + consolidator — note shape if non-obvious)*
+- **Gate:** automated review-gate (2-pass cap, interactive drop-out on cap-hit)
+
 #### Step 1.1: [Task Description]
 
 - **Files**: `path/to/file.ts:lines`
@@ -326,10 +379,28 @@ Use this structure:
 
 ### Phase 2: [Phase Name] *(parallel with Phase 3)*
 
+**Execution**
+
+- **Scope:** [One-line summary]
+- **Depends on:** [prior review_group ids]
+- **Parallel with:** Phase 3
+- **review_group:** `<id>`
+- **Gate:** automated review-gate
+
 [When phases or steps are independent, mark them with *(parallel with Phase N)* so the implementer can execute them
 concurrently. Omit this annotation for sequential phases.]
 
 [Continue pattern...]
+
+### Phase N (terminal): security-gate
+
+**Execution**
+
+- **Scope:** Plan-level security review over the aggregated diff
+- **Depends on:** [all prior review_group ids]
+- **review_group:** `security`
+- **security_review:** `automated` *(or `human` / `hybrid` for high-stakes plans)*
+- **Gate:** automated review-gate (reviewer runs first; remediation spawns an implementer on CHANGES)
 
 ## Test Strategy
 
@@ -440,3 +511,6 @@ Before requesting approval:
 - [ ] Risks are identified with mitigations
 - [ ] Rollback strategy documented for high stakes
 - [ ] Plan document created at docs/plans/
+- [ ] Every phase's Execution block includes a `review_group: <id>` field
+- [ ] Plan ends with a terminal `security-gate` phase (`depends_on: [all prior groups]`, `review_group: security`, `security_review` mode set)
+- [ ] For each group, the Solo / Batched-sequential / Fan-out+consolidator shape choice is recorded inline when non-obvious
