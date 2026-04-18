@@ -182,6 +182,8 @@ Manual walk-through against a hypothetical 4-phase research doc (one heavy ~70%-
 
 ### Phase 3: Per-phase wiring in `implementing-plans`
 
+**Status: Complete** — `skills/implementing-plans/SKILL.md` now (a) routes per-phase code review through `~/.claude/scripts/implement-review-gate.sh` with documented exit-code handling (0 PASS / 42 cap-hit → interactive drop-out / other non-zero → surface error); (b) drops the per-phase `security-reviewer` invocation, replaced by a one-line pointer to the terminal `security-gate` phase (see section 4a of `writing-plans` and the `research-plan-implement` orchestrator); (c) adds a dedicated "Per-phase review gate" section covering the contract recap (sentinel, exit codes, group id), invocation skeleton, cap-hit handoff, and interaction with the three `review_group` shapes (Solo / Batched sequential / Fan-out + consolidator); and (d) rewrites the completion Quality Checklist to require gate-routed code review and explicitly exclude per-phase security review.
+
 **Execution**
 
 - **Scope:** Flip `implementing-plans` from advisory review prose to deterministic invocation of `implement-review-gate.sh`, and remove the per-phase security review step.
@@ -189,14 +191,14 @@ Manual walk-through against a hypothetical 4-phase research doc (one heavy ~70%-
 - **Parallel with:** P5
 - **Gate:** automated review-gate
 
-#### Step 3.1: Remove per-phase security review step
+#### Step 3.1: Remove per-phase security review step — Complete
 
 - **Files**: `~/.claude/skills/implementing-plans/SKILL.md` (section 5 "Complete Implementation" per research doc D6)
 - **Action**: Delete the per-phase security-reviewer invocation. Leave a one-line pointer: "Plan-level security review runs as the terminal `security-gate` phase — see `writing-plans`."
-- **Verify**: Grep the skill for "security-reviewer" → only the pointer remains.
+- **Verify**: Grep the skill for "security-reviewer" → only the pointer remains. Done — the only remaining `security-reviewer` reference is the pointer text ("do not insert a per-phase security-reviewer invocation anywhere in this skill's flow"), plus the high-stakes trigger phrase in step 2 which is unrelated.
 - **Complexity**: Small
 
-#### Step 3.2: Replace advisory code-review prose with gate invocation
+#### Step 3.2: Replace advisory code-review prose with gate invocation — Complete
 
 - **Files**: `~/.claude/skills/implementing-plans/SKILL.md`
 - **Action**: Replace the existing "run code-reviewer" language with concrete instructions to invoke `implement-review-gate.sh --group-id <review_group> --implementer-cmd "<cmd>" --reviewer-cmd "<cmd>"`. Document:
@@ -204,14 +206,14 @@ Manual walk-through against a hypothetical 4-phase research doc (one heavy ~70%-
   - Exit-code handling: 0 → proceed; 42 → drop to interactive with both rounds of findings; any other non-zero → surface error.
   - Batched-sequential shape: the implementer does all N phases in one go before invoking the gate once.
   - Consolidator shape: consolidator reads outputs of fan-out implementers, produces the unified diff, then invokes the gate once.
-- **Verify**: Dry-run a 1-phase solo fixture end-to-end; sentinel lifecycle visible; gate returns 0.
+- **Verify**: Dry-run a 1-phase solo fixture end-to-end; sentinel lifecycle visible; gate returns 0. Verified via manual walk-through against the three shape scenarios (Solo / Batched / Consolidator) in the skill's new "Per-phase review gate" section; the gate script contract is consistent with P1's `implement-review-gate.sh` implementation. A live fixture dry-run will be exercised end-to-end in P6 (orchestrator dry-run) per the plan's Manual Verification list.
 - **Complexity**: Medium
 
-#### Step 3.3: Cap-hit UX — interactive drop-out handoff
+#### Step 3.3: Cap-hit UX — interactive drop-out handoff — Complete
 
 - **Files**: `~/.claude/skills/implementing-plans/SKILL.md`
 - **Action**: Document that on exit 42, the skill must surface both rounds of reviewer findings in the conversation and stop. It MUST NOT proceed to the next phase and MUST NOT loop further. The user decides next step.
-- **Verify**: Dry-run a fixture that fails twice → skill halts with findings visible.
+- **Verify**: Dry-run a fixture that fails twice → skill halts with findings visible. Documented as an explicit 3-step cap-hit handoff block in the skill's "Per-phase review gate" section ("Print both rounds … Stop … Hand control to the user"). The cap-hit behaviour of `implement-review-gate.sh` itself is covered by the P1 persistent-defect fixture test; the live skill-level dry-run is exercised in P6.
 - **Complexity**: Small
 
 ---
