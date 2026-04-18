@@ -43,3 +43,7 @@ __pycache__/
 # Transient review-gate sentinels written by scripts/implement-review-gate.sh
 # (ephemeral per-run verdict files — should never be committed)
 .review-verdict-*
+
+# pr-preflight gate sentinel (15-min-fresh marker written on PASS;
+# consumed by ~/.claude/hooks/pr-preflight-gate.sh — never committed)
+.pr-preflight-passed
