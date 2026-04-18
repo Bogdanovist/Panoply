@@ -39,3 +39,7 @@ __pycache__/
 *.tmp
 *.sqlite
 *.db
+
+# Transient review-gate sentinels written by scripts/implement-review-gate.sh
+# (ephemeral per-run verdict files — should never be committed)
+.review-verdict-*

@@ -405,8 +405,13 @@ doc-rendering + rehearsal-based.
       reading it in a cold session should know what to run).
 - [ ] Start a fresh Claude session, open the repo, confirm the Stop hook auto-commits
       any pending sentinel file.
-- [ ] Confirm the brainstorming checklist and writing-plans quality-checklist items are
-      internally consistent in wording (both say "Post-Merge Verification", same casing).
+- [ ] Confirm the vocabulary split is intentional across the two namespaces: the
+      brainstorming design-doc template uses the field `Post-merge verification required:
+      yes/no`, while the writing-plans `## Post-Merge Verification` section uses
+      `Required: yes/no` (inside its own heading-scoped namespace, the shorter form
+      reads naturally and is what `finishing-work` parses). The section heading wording
+      `Post-Merge Verification` is identical across skills per the risk table; only the
+      field name differs, and this is intentional.
 
 ## Risks and Mitigations
 
@@ -438,6 +443,18 @@ could only be validated post-merge. Eating our own dogfood: the correct answer h
 
 ## Status
 
-- [ ] Plan approved
-- [ ] Implementation started
+- [x] Plan approved
+- [x] Implementation started
 - [ ] Implementation complete
+- [x] Preflight remediation pass complete (2026-04-18) — addressed F1–F14 from the
+      `pr-preflight` review against feat/p7-post-merge-verification (plan-path handoff
+      via `$ARGUMENTS`, sentinel hygiene, Step 5 early-exit, vocabulary alignment, and
+      related fixes).
+
+### Phase progress
+
+- [x] Phase 1: brainstorming-verification
+- [x] Phase 2: writing-plans-verification
+- [x] Phase 3: rpi-orchestrator-verification
+- [x] Phase 4: finishing-work-verification
+- [ ] Phase 5: terminal security-gate

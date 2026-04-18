@@ -64,6 +64,15 @@ Ask questions one at a time using AskUserQuestion:
    - Approaches to avoid
    - Prior art to reference
 
+6. **Is post-merge verification required?** (two-part)
+   - First, yes/no: is any verification beyond automated CI needed? A perfectly valid answer
+     is "no — CI covers it"; the purpose of the yes/no framing is to make the answer
+     explicit rather than implicit.
+   - If yes, follow up: "describe the trigger, commands, and owner." Examples of cases that
+     usually need post-merge verification: cross-repo coordination, Terraform applies
+     against live infra, post-deploy smoke checks, manual functional checks that require
+     data/access unavailable locally.
+
 **Prefer multiple-choice questions** when possible. Open-ended is fine for exploration, but specific choices accelerate
 understanding.
 
@@ -129,6 +138,14 @@ Design document structure:
 
 ## Trade-offs Accepted
 [What we're giving up and why it's acceptable]
+
+## Verification Plan
+
+**Post-merge verification required**: yes | no
+**If yes — what needs to run, where, and when**:
+- [step with access requirement / repo / trigger point]
+
+*This section becomes `## Post-Merge Verification` in the plan produced by `writing-plans`.*
 
 ## Open Questions
 [Anything still unresolved]
@@ -268,5 +285,6 @@ Brainstorming output (design document) feeds into research or planning.
 - [ ] Multiple approaches considered
 - [ ] Trade-offs discussed
 - [ ] YAGNI applied ruthlessly
+- [ ] Verification plan captured (`Post-merge verification required: no`, or `yes` with steps identified)
 - [ ] Design documented (if proceeding to plan)
 - [ ] Next phase identified
