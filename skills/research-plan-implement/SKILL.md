@@ -40,11 +40,25 @@ ORCHESTRATOR (main context — stays thin)
   │
   ├── [APPROVAL GATE: User approves plan]
   │
-  └── Phase 3: Spawn ONE implementer per plan phase
-        │     (sequential by default; parallel only where the plan
-        │      marks phases as independent; pause at any phase the
-        │      plan marks as gated, honouring its chosen mechanism)
-        └── Output: code changes, test results, PR(s)
+  ├── Record base_ref = HEAD (captured BEFORE Phase 3 begins; used by
+  │   the terminal security-gate to review the aggregated diff)
+  │
+  ├── Phase 3: Spawn ONE implementer per review_group
+  │     │     (groups iterate in dependency order; parallel only where
+  │     │      the plan marks review_groups as independent; each group's
+  │     │      implementer invokes implement-review-gate.sh once per
+  │     │      group — 2-pass code review with cap-hit → interactive
+  │     │      drop-out; explicit human gates honoured where declared)
+  │     └── Output: code changes, test results, sub-PR(s)
+  │
+  └── Terminal security-gate phase (runs ONCE, after all other groups)
+        │     Spawns security-reviewer over `git diff $base_ref..HEAD`
+        │     plus the plan path and phase-name list. PASS → invoke
+        │     finishing-work. CHANGES → remediation loop via
+        │     implement-review-gate.sh --group-id security (2-pass cap).
+        │     Cap-hit → AskUserQuestion (remediate / override-logged /
+        │     abort).
+        └── Output: final PR on security PASS
 ```
 
 **Key principle**: Subagents communicate through files, not conversation context. Each subagent reads the artifacts from
@@ -250,89 +264,151 @@ Use AskUserQuestion:
 
 **Do not skip this approval gate.** The user must explicitly approve the plan before implementation begins.
 
-## Phase 3: Implement (One Subagent Per Plan Phase)
+## Phase 3: Implement (One Subagent Per review_group)
 
-After plan approval, work through the plan **one phase at a time**, spawning exactly ONE implementer per phase. Each
-implementer gets a fresh context window scoped to a single clear task, so its context stays focused and uncluttered.
+After plan approval, work through the plan **one review_group at a time**, spawning exactly ONE implementer per group.
+Each implementer gets a fresh context window scoped to that group's work, so its context stays focused and uncluttered.
+
+### Step 0: Record `base_ref` Before Implementation Starts
+
+Immediately after plan approval and BEFORE spawning the first Phase 3 implementer, record the current HEAD as
+`base_ref`. This value anchors the aggregated diff consumed by the terminal `security-gate` phase
+(`git diff $base_ref..HEAD`). Capture it via a short bash call (e.g. `git rev-parse HEAD`) and hold it in orchestrator
+state until the terminal phase runs. Do not re-capture it mid-run.
 
 ### Step 1: Read the Plan's Execution Structure
 
-Read the plan file and extract, for each phase, the `Execution` block (scope, depends-on, parallel-with, gate) plus the
-overall branch/PR strategy. The orchestrator only reads this structural metadata plus the phase's own section — not the
-full content of other phases.
+Read the plan file and extract, for each phase, the `Execution` block (scope, depends-on, parallel-with, gate,
+`review_group`) plus the overall branch/PR strategy. The orchestrator only reads this structural metadata plus the
+phase's own section — not the full content of other phases.
 
-If the plan is missing per-phase `Execution` blocks, stop and spawn a fresh planner to add them — do not proceed without
-explicit gating and dependency info.
+If the plan is missing per-phase `Execution` blocks, or any phase lacks a `review_group` field, or the plan does not end
+with a terminal `security-gate` phase, stop and spawn a fresh planner to fix the plan — do not proceed without explicit
+gating, dependency info, review-group assignments, and the terminal gate. See `writing-plans` section 4a for the
+`review_group` shapes (Solo / Batched sequential / Fan-out + consolidator) and terminal-gate template.
 
-### Step 2: Execute Phases in Dependency Order
+### Step 2: Execute review_groups in Dependency Order
 
-Walk the phases respecting `depends on`. **Sequential is the default.** Spawn multiple implementers concurrently (in a
-single message with multiple Agent calls) ONLY when the plan explicitly marks phases as `parallel with` each other AND
-their dependencies are satisfied.
+Walk the review_groups respecting `depends on`. **Sequential is the default.** Spawn multiple implementers concurrently
+(in a single message with multiple Agent calls) ONLY when the plan explicitly marks groups as `parallel with` each other
+AND their dependencies are satisfied.
 
-For each phase (or parallel group), spawn exactly one implementer per phase:
+For each review_group (or parallel group of groups), spawn exactly ONE implementer. The shape of the group determines
+what that single implementer does:
+
+| Shape | Implementer behaviour |
+| ----- | --------------------- |
+| **Solo** (1 phase = 1 group) | Implement the phase, then invoke `implement-review-gate.sh --group-id <id>` once. |
+| **Batched sequential** (N small phases = 1 group) | One implementer runs ALL N phases in order, then invokes the gate ONCE over the aggregated diff. Never review phase-by-phase. |
+| **Fan-out + consolidator** (parallel phases = 1 group) | Fan-out implementers produce partial outputs; the consolidator assembles the unified diff then invokes the gate ONCE. |
+
+The gate script (`~/.claude/scripts/implement-review-gate.sh`) is the 2-pass implementer→code-reviewer loop. It writes
+`.review-verdict[-<group_id>]` and returns:
+
+- `0` (PASS) → group complete, orchestrator advances.
+- `42` (EX_REVIEW_UNRESOLVED — CHANGES at cap) → drop to interactive. Surface both rounds of findings verbatim; do NOT
+  advance; user decides remediation (fix manually, accept as out-of-scope, amend plan, or abort).
+- Any other non-zero → implementer or reviewer crashed; surface the error and stop.
+
+Spawn the implementer like this:
 
 ```text
 Spawn a subagent with the Agent tool:
-  name: "implementer-<phase-slug>"
+  name: "implementer-<group-id>"
   model: "opus"
   isolation: "worktree"
-  prompt: "You are implementing ONE phase of an approved plan.
+  prompt: "You are implementing ONE review_group of an approved plan.
 
 NOTE: You are running in an isolated worktree (isolation: worktree).
 The implementing-plans skill will detect this via 'test -f .git' and
 skip the worktree offer — this is expected behavior.
 
 Plan: docs/plans/YYYY-MM-DD-<topic>-plan.md
-Your phase: <phase name>
-Your scope is limited to this phase only. Do NOT start work on any
-other phase, even if steps look related. Other phases have their own
-implementers.
+Your review_group: <group-id>
+Your phases within this group: <list of phase names, in order>
+Group shape: <Solo | Batched sequential | Fan-out + consolidator>
+Your scope is limited to this group only. Do NOT start work on any
+phase outside this group. Other groups have their own implementers.
 
-1. Read the plan, focusing on your phase's section and its
-   Execution block (scope, gate, branch strategy).
+1. Read the plan, focusing on your group's phase sections and their
+   Execution blocks (scope, gate, review_group, branch strategy).
 2. Invoke the Skill tool with skill: 'implementing-plans' and
    args: 'docs/plans/YYYY-MM-DD-<topic>-plan.md'
-3. Follow the skill's methodology for YOUR phase only:
-   - Execute your phase's steps in order
+3. Follow the skill's methodology for YOUR group only:
+   - Execute your phases' steps in order (all N phases for a
+     Batched-sequential group; or your single phase for Solo; or
+     consolidate fan-out outputs into the unified diff for Consolidator)
    - Run verification after each step
-   - Run code review and security review at phase completion
-4. Update the plan document status for YOUR phase's steps.
-5. Respect the phase's Gate spec: if it says open a sub-PR and
+   - At group completion, invoke
+     ~/.claude/scripts/implement-review-gate.sh exactly ONCE over the
+     aggregated diff with --group-id <group-id>. Handle exit 0 (PASS),
+     42 (cap-hit → drop to interactive with both rounds of findings),
+     and any other non-zero (implementer/reviewer crash) per the
+     implementing-plans skill contract.
+   - Do NOT run per-phase security review. Plan-level security review
+     runs once at the terminal security-gate phase under orchestrator
+     control (see writing-plans section 4a).
+4. Update the plan document status for YOUR group's steps.
+5. Respect the group's Gate spec: if it says open a sub-PR and
    stop, do that; if it says autonomous, just commit and finish.
 6. CRITICAL: git commit ALL changes before completing — uncommitted
    work in an isolated worktree is silently destroyed on cleanup.
 
-Execute the phase as written. If you encounter issues requiring plan
+Execute the group as written. If you encounter issues requiring plan
 changes, document them and return the issue — do NOT deviate silently
-and do NOT bleed into adjacent phases."
+and do NOT bleed into adjacent groups."
 ```
 
-### Step 3: Honour Review Gates Between Phases
+### Step 3: Honour Gates Between review_groups
 
-After each phase's implementer completes, consult that phase's `Gate` field:
+After each group's implementer completes, consult that group's `Gate` field (set per-phase by the planner):
 
-- **Autonomous** — proceed directly to the next phase (or parallel group) with no user prompt.
-- **Any review gate** — pause. Summarize what the phase produced (files changed, commits, sub-PR link if applicable),
-  then use AskUserQuestion with options to continue, request changes (spawn a new implementer for that phase), or stop.
-  Follow the specific mechanism the plan chose (e.g. wait for a sub-PR to merge, wait for user review-and-approve, etc.).
+- **Autonomous (review-gate PASS)** — the implementer's in-worktree gate invocation already returned exit 0. Proceed
+  directly to the next group (or parallel group set) with no user prompt.
+- **Review-gate cap-hit (exit 42)** — the implementer surfaced both rounds of reviewer findings and halted. The
+  orchestrator pauses and uses AskUserQuestion with options to remediate (spawn a new implementer for the group with
+  the findings piped in), accept as out-of-scope, amend the plan, or abort.
+- **Explicit human gate declared by the plan** — pause regardless of gate exit code. Summarize what the group produced
+  (files changed, commits, sub-PR link if applicable), then use AskUserQuestion with options to continue, request
+  changes (spawn a new implementer for that group), or stop. Follow the specific mechanism the plan chose (e.g. wait
+  for a sub-PR to merge, wait for user review-and-approve, etc.).
 
 Never skip a gate the plan declared, and never silently invent one the plan didn't declare.
 
-### Step 4: Final Report
+### Step 4: Terminal `security-gate` Phase (runs ONCE)
 
-After the last phase completes (and, if applicable, the final PR is raised per the plan's branch strategy), present the
-rollup:
+After ALL other review_groups complete (including their gates), execute the terminal `security-gate` phase. This is the
+only security review in the plan — no group runs security-reviewer on its own.
+
+1. Spawn the `security-reviewer` agent with three inputs: the aggregated diff from `git diff $base_ref..HEAD` (using
+   the `base_ref` captured in Step 0), the plan document path, and the ordered list of phase names for scope
+   orientation. Do NOT pipe per-phase reviewer summaries — the reviewer works off the unified diff.
+2. The reviewer writes `.review-verdict-security` per the sentinel contract.
+3. Read the sentinel:
+   - **`REVIEW_APPROVED`** → security PASS. Proceed to `finishing-work`.
+   - **Findings list (CHANGES)** → spawn a remediation implementer under `implement-review-gate.sh --group-id security
+     --reviewer-cmd <spawn security-reviewer>`. The gate owns the 2-pass cap.
+4. Gate outcomes for the remediation loop:
+   - Exit 0 (PASS) → proceed to `finishing-work`.
+   - Exit 42 (cap-hit) → AskUserQuestion with options: "remediate further" / "override (logged)" / "abort".
+   - Any other non-zero → surface error and stop.
+5. If the plan declares `security_review: human` or `hybrid`, honour the extra human gate per the plan's terminal-phase
+   control-flow block (see `writing-plans` terminal `security-gate` template).
+
+### Step 5: Final Report
+
+After the terminal security-gate PASSes and `finishing-work` completes (including any final PR raised per the plan's
+branch strategy), present the rollup:
 
 ```text
 Implementation complete for '<topic>'.
 
-Phases completed: [N/M]
+review_groups completed: [N/M]
 Branch strategy: [single PR to main | feature branch with sub-PRs | ...]
 Final PR: [url or "none raised — see plan"]
 Files changed: [list]
 Tests: [pass/fail]
-Reviews: [code review status, security review status per phase]
+Reviews: [per-group code-review verdicts, terminal security-gate verdict]
 ```
 
 If any implementer reported deviations or blockers, present them and ask the user how to proceed.
@@ -369,10 +445,14 @@ Then resume the pipeline at Phase 1 with clarified requirements.
 
 ## Orchestrator Rules
 
-The orchestrator MUST stay thin:
+The orchestrator MUST stay thin. Its job is delegation, artifact reading, and gate decisions — nothing more.
 
-- **Do**: Spawn subagents, read artifacts, present summaries, gate approvals
-- **Do NOT**: Research code, write plans, implement changes, or read source files beyond the phase artifacts
+- **Do**: Spawn subagents, read artifacts (research doc, plan doc, `.review-verdict[-<group_id>]` sentinels), present
+  summaries, gate approvals, record `base_ref` at plan start, drive the terminal security-gate phase, hand off to
+  `finishing-work` on security PASS.
+- **Do NOT**: Research code, write plans, implement changes, invoke `code-reviewer` or `security-reviewer` directly
+  outside the documented terminal-gate flow, run `implement-review-gate.sh` itself (the per-group implementer does
+  that), or read source files beyond the phase artifacts and sentinel files.
 
 This ensures the orchestrator's context remains small, leaving maximum context for each subagent.
 
@@ -395,10 +475,12 @@ Use explicit `model` parameters when spawning subagents:
 | Spawn 5+ research subagents | Keep to 2-4 focused subagents |
 | Skip approval gates between phases | Always get explicit user approval |
 | Combine dependent research questions | Only parallelize independent questions |
-| Spawn one implementer for the whole plan | One implementer per plan phase, scoped to a single clear task |
-| Spawn multiple implementers for the same phase | Exactly one implementer per phase, always |
-| Parallelize phases by default | Sequential by default; parallel only when the plan marks phases as independent |
-| Assume a default gating mode (all-autonomous or all-gated) | Planner specifies gate explicitly per phase; orchestrator refuses to run otherwise |
+| Spawn one implementer for the whole plan | One implementer per review_group, scoped to that group's task(s) |
+| Spawn multiple implementers for the same review_group | Exactly one implementer per group, always |
+| Parallelize groups by default | Sequential by default; parallel only when the plan marks groups as independent |
+| Assume a default gating mode (all-autonomous or all-gated) | Planner specifies gate explicitly per phase; orchestrator refuses to run plans missing `review_group` or the terminal `security-gate` phase |
+| Invoke `security-reviewer` at the end of each group | Terminal `security-gate` phase runs exactly once over the aggregated `$base_ref..HEAD` diff |
+| Invoke `implement-review-gate.sh` from the orchestrator | Per-group implementer invokes the gate; orchestrator only reads the sentinel / gate exit code |
 
 ## Quality Checklist
 
@@ -412,17 +494,24 @@ Before each phase transition:
 
 Before entering Phase 3:
 
-- [ ] Plan contains an `Execution` block per phase (scope, depends-on, parallel-with, gate)
+- [ ] Plan contains an `Execution` block per phase (scope, depends-on, parallel-with, gate, `review_group`)
+- [ ] Every phase has a `review_group` ID; orchestrator refuses to run otherwise
+- [ ] Plan ends with a terminal `security-gate` phase (`review_group: security`)
 - [ ] Plan states overall branch/PR strategy
 - [ ] Each plan phase is sized for a single implementer's focused context
+- [ ] `base_ref = HEAD` recorded BEFORE first implementer spawn
 
 During Phase 3:
 
-- [ ] Exactly one implementer spawned per phase — never multiple for the same phase
-- [ ] Phases run sequentially unless the plan explicitly marks them parallel
+- [ ] Exactly one implementer spawned per review_group — never multiple for the same group
+- [ ] review_groups run sequentially unless the plan explicitly marks them parallel
 - [ ] Every declared gate honoured; no invented gates, no skipped gates
+- [ ] Per-group implementer invokes `implement-review-gate.sh` exactly once; orchestrator does not invoke it
+- [ ] No security review runs per group — security-reviewer is reserved for the terminal phase
 
 At pipeline completion:
 
+- [ ] Terminal `security-gate` ran exactly once over `$base_ref..HEAD`
+- [ ] `finishing-work` invoked only on security PASS (or explicit user override on cap-hit)
 - [ ] All artifacts saved to `docs/plans/`
 - [ ] Final results presented to user
