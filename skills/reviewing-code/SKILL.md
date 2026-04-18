@@ -238,7 +238,7 @@ Providing architectural review only until split.
 
 **APPROVE** - No blocking issues, code is ready
 
-- Implementation may proceed to security review
+- Implementation may proceed past this per-phase gate (security review runs once at plan end via the terminal `security-gate` phase)
 - Note any minor items for awareness
 
 **APPROVE WITH NITS** - Only non-blocking suggestions
@@ -262,4 +262,4 @@ When called from implementation phase:
 3. Focus on quality implications of the changes
 4. Report findings clearly with actionable recommendations
 5. Soft-gate completion if blocking issues found (user can override)
-6. Security concerns flagged here will be examined by security-reviewer next
+6. Security concerns flagged here will be examined by `security-reviewer` once at plan end (terminal `security-gate` phase), NOT per-phase

@@ -220,6 +220,8 @@ Manual walk-through against a hypothetical 4-phase research doc (one heavy ~70%-
 
 ### Phase 4: Terminal security-gate phase
 
+**Status: Complete** — `agents/security-reviewer.md` now carries a dedicated "Plan-level mode (terminal `security-gate` phase)" section enumerating the three orchestrator-supplied inputs (aggregated diff `git diff $base_ref..HEAD`, plan document path, ordered phase-name list), explicitly forbidding per-phase reviewer summaries, documenting scope (cross-phase interactions), and confirming the sentinel contract with default group id `security`. `skills/writing-plans/SKILL.md` now contains the reusable terminal-phase control-flow contract (seven numbered steps covering base_ref recording, reviewer invocation, PASS→`finishing-work`, CHANGES→remediation via `implement-review-gate.sh --group-id security`, cap-hit→`AskUserQuestion` with remediate/override/abort options, and the human/hybrid mode semantics). The section-6 template now emits the required fields verbatim: `depends_on`, `review_group: security`, `security_review: automated|human|hybrid`, plus the reviewer-inputs block and control-flow summary. Stale per-phase "security review next" language in `agents/code-reviewer.md` and `skills/reviewing-code/SKILL.md` has been rewritten to point at the terminal gate. Stale language in `skills/research-plan-implement/SKILL.md` is deliberately left for P6 (RPI orchestrator) per phase-scope boundaries.
+
 **Execution**
 
 - **Scope:** Implement the plan-level security review: one reviewer run at end-of-plan over the aggregated diff, with a 2-pass remediation cap and interactive drop-out.
