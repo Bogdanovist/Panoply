@@ -70,6 +70,8 @@ These choices MUST be used consistently across the script, skills, and agent fil
 
 ### Phase 1: Gate script + reviewer sentinel contract
 
+**Status: Complete** — script, tests, fixtures, and reviewer contract updates landed on `feat/deterministic-review-loop`. Script lives at `~/src/Panoply/scripts/implement-review-gate.sh` with `~/.claude/scripts` symlinked to `~/src/Panoply/scripts` (matches existing `agents`/`skills`/`hooks` symlink pattern). Pure-bash test harness used in place of bats (not installed; plan permits lightweight harness).
+
 **Execution**
 
 - **Scope:** Build the bash gate that owns the 2-pass implementer→reviewer loop and update the two reviewer agents to write the sentinel verdict file.
@@ -77,7 +79,7 @@ These choices MUST be used consistently across the script, skills, and agent fil
 - **Parallel with:** P5
 - **Gate:** automated review-gate (2-pass cap, interactive drop-out on cap-hit)
 
-#### Step 1.1: Author `implement-review-gate.sh` with contract tests (RED)
+#### Step 1.1: Author `implement-review-gate.sh` with contract tests (RED) — Complete
 
 - **Files**: `~/.claude/scripts/tests/implement-review-gate.bats` (new) — using `bats-core` or a lightweight pure-bash test harness if bats is unavailable.
 - **Action**: Write failing tests asserting the gate's externally-observable behaviour.
@@ -92,7 +94,7 @@ These choices MUST be used consistently across the script, skills, and agent fil
 - **Verify**: Tests exist and fail (no script yet).
 - **Complexity**: Medium
 
-#### Step 1.2: Implement `implement-review-gate.sh` (GREEN)
+#### Step 1.2: Implement `implement-review-gate.sh` (GREEN) — Complete
 
 - **Files**: `~/.claude/scripts/implement-review-gate.sh` (new, chmod +x)
 - **Action**: Minimal bash that:
@@ -106,7 +108,7 @@ These choices MUST be used consistently across the script, skills, and agent fil
 - **Verify**: All tests from 1.1 pass.
 - **Complexity**: Medium
 
-#### Step 1.3: Update `code-reviewer.md` to write the sentinel (RED → GREEN)
+#### Step 1.3: Update `code-reviewer.md` to write the sentinel (RED → GREEN) — Complete
 
 - **Files**: `~/.claude/agents/code-reviewer.md`
 - **Action**:
@@ -120,14 +122,14 @@ These choices MUST be used consistently across the script, skills, and agent fil
 - **Verify**: Manual invocations produce sentinel in all three shapes.
 - **Complexity**: Small
 
-#### Step 1.4: Update `security-reviewer.md` to write the sentinel (same contract)
+#### Step 1.4: Update `security-reviewer.md` to write the sentinel (same contract) — Complete
 
 - **Files**: `~/.claude/agents/security-reviewer.md`
 - **Action**: Identical verdict contract section as 1.3. Default group id for the terminal gate is `security` (sentinel path `.review-verdict-security`). Add a pointer that P4 will drive plan-level invocation.
 - **Verify**: Manual invocation on a diff produces the sentinel in the expected shape.
 - **Complexity**: Small
 
-#### Step 1.5: End-to-end smoke of the gate against a fixture
+#### Step 1.5: End-to-end smoke of the gate against a fixture — Complete
 
 - **Files**: `~/.claude/scripts/tests/fixtures/` (new minimal fixture — a tiny repo with a 1-line bug)
 - **Action**: Run the gate with real `code-reviewer` against the fixture (1-pass PASS case) and a fixture with an intentional blocker (CHANGES-then-PASS case). Confirm sentinel lifecycle and exit codes match the contract.

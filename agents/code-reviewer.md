@@ -133,7 +133,44 @@ processor (correctness) and LSP violation in UserService subclass (design).
 these are acceptable risks.
 ```
 
-### Step 7: Report Completion
+### Step 7: Write Verdict Sentinel
+
+**Verdict output contract (MANDATORY — gate depends on this).**
+
+As your final action, write a verdict sentinel file that the calling
+`implement-review-gate.sh` will read to decide PASS vs. CHANGES. The gate
+does a byte-exact comparison, so the contents matter precisely.
+
+**Sentinel path:**
+
+- Environment variable `REVIEW_SENTINEL` is exported by the gate and is
+  the path to write. If it is set, ALWAYS use it verbatim.
+- If `REVIEW_SENTINEL` is not set (agent invoked outside the gate),
+  default to `.review-verdict` in the current working directory, or
+  `.review-verdict-<group_id>` if the invoking prompt specified a group
+  id.
+
+**Sentinel contents:**
+
+- **PASS** (verdict APPROVE or APPROVE WITH NITS): write the single line
+  `REVIEW_APPROVED` — nothing before it, nothing after it, no trailing
+  blank line. The gate compares the full file contents to the exact
+  string `REVIEW_APPROVED`; any deviation is treated as CHANGES.
+- **CHANGES** (verdict REQUEST CHANGES): write a bulleted list of the
+  blocking issues (one `- ` bullet per issue, with file:line where
+  relevant). Do NOT include the string `REVIEW_APPROVED` anywhere in a
+  CHANGES sentinel.
+
+**Protocol violations:**
+
+- Writing anything other than the two shapes above is a reviewer
+  protocol violation. Emitting e.g. `APPROVED` or `REVIEW APPROVED`
+  (space instead of underscore) will be treated as CHANGES and cost a
+  remediation pass.
+- Do NOT skip writing the sentinel on PASS — the gate treats a missing
+  sentinel as a reviewer crash and exits non-zero.
+
+### Step 8: Report Completion
 
 Summarize the review:
 

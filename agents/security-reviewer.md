@@ -106,6 +106,49 @@ Produce report using `security-review` skill format:
 [PASS / PASS WITH WARNINGS / FAIL]
 ```
 
+### Step 6: Write Verdict Sentinel
+
+**Verdict output contract (MANDATORY — gate depends on this).**
+
+As your final action, write a verdict sentinel file that the calling
+`implement-review-gate.sh` will read to decide PASS vs. CHANGES. The gate
+does a byte-exact comparison, so the contents matter precisely.
+
+**Sentinel path:**
+
+- Environment variable `REVIEW_SENTINEL` is exported by the gate and is
+  the path to write. If it is set, ALWAYS use it verbatim.
+- If `REVIEW_SENTINEL` is not set (agent invoked outside the gate),
+  default to `.review-verdict-security` in the current working
+  directory. Plan-level security review (driven by Phase 4 of the
+  deterministic-review-loop work) uses group id `security`.
+
+**Sentinel contents:**
+
+- **PASS** (verdict PASS or PASS WITH WARNINGS): write the single line
+  `REVIEW_APPROVED` — nothing before it, nothing after it, no trailing
+  blank line. The gate compares the full file contents to the exact
+  string `REVIEW_APPROVED`; any deviation is treated as CHANGES.
+- **CHANGES** (verdict FAIL): write a bulleted list of the blocking
+  security findings (one `- ` bullet per issue, with file:line and a
+  concrete remediation where possible). Do NOT include the string
+  `REVIEW_APPROVED` anywhere in a CHANGES sentinel.
+
+**Protocol violations:**
+
+- Writing anything other than the two shapes above is a reviewer
+  protocol violation. Emitting e.g. `APPROVED` or `REVIEW APPROVED`
+  (space instead of underscore) will be treated as CHANGES and cost a
+  remediation pass.
+- Do NOT skip writing the sentinel on PASS — the gate treats a missing
+  sentinel as a reviewer crash and exits non-zero.
+
+**Plan-level mode note:** when invoked as the terminal security-gate
+phase (introduced in Phase 4), the same contract applies, but the input
+is the plan-aggregated diff (`git diff $base_ref..HEAD`) plus the plan
+document path. The sentinel path is still `REVIEW_SENTINEL` if exported
+by the gate.
+
 ## Verdict Guidelines
 
 **PASS**: No critical or high findings
