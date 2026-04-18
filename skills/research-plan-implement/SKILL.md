@@ -409,7 +409,13 @@ Final PR: [url or "none raised — see plan"]
 Files changed: [list]
 Tests: [pass/fail]
 Reviews: [per-group code-review verdicts, terminal security-gate verdict]
+Verification: none | pending — see plan §Post-Merge Verification
 ```
+
+Verification handoff lives in `finishing-work`; the orchestrator does not itself gate on
+`## Post-Merge Verification`. The orchestrator's only responsibility is to include the
+`Verification:` line in the final report based on whether `finishing-work` reported a
+pending marker.
 
 If any implementer reported deviations or blockers, present them and ask the user how to proceed.
 
