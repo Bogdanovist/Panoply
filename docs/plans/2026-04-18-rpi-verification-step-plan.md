@@ -438,6 +438,14 @@ could only be validated post-merge. Eating our own dogfood: the correct answer h
 
 ## Status
 
-- [ ] Plan approved
-- [ ] Implementation started
+- [x] Plan approved
+- [x] Implementation started
 - [ ] Implementation complete
+
+### Phase progress
+
+- [x] Phase 1: brainstorming-verification
+- [ ] Phase 2: writing-plans-verification
+- [ ] Phase 3: rpi-orchestrator-verification
+- [ ] Phase 4: finishing-work-verification
+- [ ] Phase 5: terminal security-gate
