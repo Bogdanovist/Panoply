@@ -24,6 +24,9 @@ Before using this skill, verify:
 2. All verifications passed
 3. Code review completed (if applicable)
 4. Security review completed (if applicable)
+5. Plan path identified (if invoked via `research-plan-implement`); otherwise search
+   `docs/plans/` for the matching plan before running Step 5. If no plan is found, Step 5
+   prints an info line and skips.
 
 **Do not proceed with failing tests.** Fix them first.
 
@@ -141,7 +144,45 @@ Do NOT delete the branch.
 
 **Require explicit confirmation.** This is destructive.
 
-### Step 5: Clean Up
+### Step 5: Surface Post-Merge Verification (if any)
+
+After the PR URL has been reported (Option 2) or the merge has completed (Option 1), if a plan
+document exists for this work (the `research-plan-implement` orchestrator passes the plan path;
+otherwise search `docs/plans/` for the most recent `*-plan.md` that matches the feature branch —
+if no match is found, print a brief info line `no plan found — skipping post-merge verification
+surface` and proceed to Step 6):
+
+1. Read the plan's `## Post-Merge Verification` section.
+2. If `Required: no` (or the section is absent): do nothing. Proceed to Step 6.
+3. If `Required: yes`:
+   a. Print the trigger point, repos involved, commands/steps, and verification owner to the
+      user, prefixed with `POST-MERGE VERIFICATION REQUIRED:`.
+   b. Invoke `AskUserQuestion` with three options:
+      - **Verification complete** — the user has already run the steps and confirms they
+        passed. Delete `.post-merge-verification-pending` if present; append a
+        `## Post-Merge Verification: Completed YYYY-MM-DD` note to the plan.
+      - **Deferred — leave pending marker** — write `.post-merge-verification-pending` at
+        repo root with contents:
+
+        ```
+        Plan: <plan path>
+        Trigger: <trigger point>
+        Commands:
+        - <command 1>
+        - <command 2>
+        Owner: <owner>
+        ```
+
+        Commit it via the normal auto-commit flow.
+      - **N/A — CI covered it after all** — delete any existing
+        `.post-merge-verification-pending`; append a `## Post-Merge Verification: Reclassified
+        as CI-sufficient YYYY-MM-DD — <one-line reason>` note to the plan.
+
+The sentinel file is a session-crossing breadcrumb, not an enforcement gate. A future phase may
+add a `PostToolUse` hook to surface the sentinel contents on new sessions; that is deliberately
+out of scope for this plan.
+
+### Step 6: Clean Up
 
 Cleanup depends on the chosen option:
 
@@ -276,5 +317,19 @@ All changes discarded."
 - [ ] Base branch identified
 - [ ] Option chosen by user
 - [ ] Tests pass after merge (if merging)
+- [ ] Post-Merge Verification surfaced (or confirmed N/A) per Step 5
 - [ ] Appropriate cleanup performed
 - [ ] Status reported to user
+
+## Artifacts
+
+This skill may read or write the following artifact files at the repository root:
+
+- **`.post-merge-verification-pending`** — plain-text session-crossing breadcrumb that records
+  an outstanding post-merge verification obligation. Written by Step 5 when the user selects
+  "Deferred — leave pending marker"; auto-committed to the repository by the Stop hook so the
+  marker survives session closure. Deleted by Step 5 when the user selects "Verification
+  complete" or "N/A — CI covered it after all". A future session can `cat` the file to pick up
+  the outstanding obligation; the plan document (referenced by the `Plan:` field inside the
+  sentinel) remains the authoritative record. The naming matches Step 5 exactly; keep them in
+  sync if the filename is ever changed.
