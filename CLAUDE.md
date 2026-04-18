@@ -57,6 +57,21 @@ Changes are automatically committed and pushed to GitHub by a Stop hook after ea
 the current branch and prints a PASS/WARN/BLOCK verdict to stdout — catching issues before they hit the PR. Ask
 the user once per session when a PR is about to be raised; don't nag.
 
+## Working in Panoply itself (vs. RPI-driven work)
+
+**Panoply is the meta-repo for Claude configuration; changes here ship straight to `main`.** No feature branches,
+no PRs, no `pr-preflight`. The Stop hook auto-commits and pushes to main — that is the intended flow for this
+repo. Just edit, commit, push.
+
+RPI (`/research-plan-implement`) and related skills prescribe feature branches + per-group PRs because they
+target the *downstream* repos those skills will eventually be used in (analytics, datascience, cloud-infrastructure).
+When you're using RPI to change Panoply itself, skip the branch/PR phases — work on main directly, and treat the
+plan's "branch strategy" and "sub-PR" prescriptions as no-ops. The per-group review-gate and terminal
+security-gate still add value and should run; the branch/PR scaffolding does not.
+
+Signal that you're in this mode: the working directory is `~/src/Panoply/` and the change touches
+`skills/`, `hooks/`, `scripts/`, `agents/`, `settings.json`, `CLAUDE.md`, or the root of this repo.
+
 ## Data Science Projects
 
 These are default preferences for new projects — override in project-level CLAUDE.md files as needed.
