@@ -46,8 +46,13 @@ if ! [[ "$NORM" =~ $GH_PR_CREATE_RE ]]; then
   exit 0
 fi
 
-# Escape hatch
-if [[ "${PR_PREFLIGHT_SKIP:-}" == "1" ]]; then
+# Escape hatch — accept either process env OR inline env prefix / export in the command string.
+# The hook runs in a process spawned by the tool harness, so inline `PR_PREFLIGHT_SKIP=1 gh pr create`
+# and `export PR_PREFLIGHT_SKIP=1; gh pr create` forms never reach this process via normal env
+# inheritance. Parse the (already-quote-stripped) command text so the documented override works
+# regardless of how it's spelled.
+INLINE_SKIP_RE='(^|[[:space:]\;\&\|\`\(])(export[[:space:]]+)?PR_PREFLIGHT_SKIP=1([[:space:]]|$|\;|\&|\||\`|\))'
+if [[ "${PR_PREFLIGHT_SKIP:-}" == "1" ]] || [[ "$NORM" =~ $INLINE_SKIP_RE ]]; then
   mkdir -p "$LOG_DIR"
   TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
   CWD=$(pwd)
@@ -78,7 +83,7 @@ block() {
 }
 
 if [[ ! -f "$SENTINEL" ]]; then
-  block "pr-preflight sentinel missing at ${SENTINEL}. Run the \`pr-preflight\` skill first; it will write the sentinel on a PASS verdict. To override in rare cases, re-run with PR_PREFLIGHT_SKIP=1 (logged to ${LOG_FILE})."
+  block "pr-preflight sentinel missing at ${SENTINEL}. Run the \`pr-preflight\` skill first; it will write the sentinel on a PASS verdict. To override in rare cases, prefix the command with \`PR_PREFLIGHT_SKIP=1 \` inline (e.g. \`PR_PREFLIGHT_SKIP=1 gh pr create ...\`); logged to ${LOG_FILE}. Note: the hook parses the inline prefix out of the command string, so it works from the Bash tool too."
 fi
 
 MTIME=$(get_mtime "$SENTINEL" || echo 0)
@@ -86,7 +91,7 @@ NOW=$(date +%s)
 AGE=$((NOW - MTIME))
 
 if (( AGE > STALENESS_SECONDS )); then
-  block "pr-preflight sentinel is stale (age ${AGE}s > ${STALENESS_SECONDS}s). Re-run the \`pr-preflight\` skill to refresh ${SENTINEL}, or override with PR_PREFLIGHT_SKIP=1 (logged)."
+  block "pr-preflight sentinel is stale (age ${AGE}s > ${STALENESS_SECONDS}s). Re-run the \`pr-preflight\` skill to refresh ${SENTINEL}, or prefix the command with \`PR_PREFLIGHT_SKIP=1 \` inline (logged)."
 fi
 
 # Fresh sentinel — allow the command
