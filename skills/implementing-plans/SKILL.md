@@ -238,31 +238,42 @@ When all steps are done:
 1. Mark all tasks completed via TaskUpdate
 2. Update plan document status section
 3. Run final verification (full test suite if applicable)
-4. Run code review:
+4. Run code review through the deterministic review gate (see **Per-phase review gate**
+   below for full mechanics). In short:
 
-   ```text
-   Task tool with subagent_type: "code-reviewer"
-   Prompt: "Review implementation changes for: $ARGUMENTS"
+   ```bash
+   ~/.claude/scripts/implement-review-gate.sh \
+     --group-id "<review_group from plan>" \
+     --implementer-cmd "<remediation command>" \
+     --reviewer-cmd  "<code-reviewer spawn command>"
    ```
 
-   If verdict is REQUEST CHANGES (soft gate):
+   Exit-code handling:
 
-   Use AskUserQuestion:
+   - `0` (PASS) → proceed.
+   - `42` (EX_REVIEW_UNRESOLVED — cap-hit after 2 passes) → drop to
+     interactive. Surface both rounds of reviewer findings in the
+     conversation verbatim. Do NOT proceed to the next phase and do NOT
+     loop further. The user decides the next step.
+   - Any other non-zero → implementer or reviewer crashed; surface the
+     error and stop.
+
+   On PASS the gate is a soft gate at the skill level: if the review_group's
+   verdict is `REVIEW_APPROVED` the skill proceeds. If you are running
+   outside the gate (manual invocation of `code-reviewer`) and the verdict
+   is REQUEST CHANGES, use AskUserQuestion:
 
    - "Address findings first" (recommended)
    - "Proceed anyway"
    - "Cancel implementation"
 
-   If user chooses "Proceed anyway", continue to security review.
-
-5. Run security review:
-
-   ```text
-   Task tool with subagent_type: "security-reviewer"
-   Prompt: "Review implementation changes for: $ARGUMENTS"
-   ```
-
-   If verdict is FAIL, stop and address findings before completing.
+5. **Security review is NOT run per phase.** Plan-level security review
+   runs exactly once as the terminal `security-gate` phase — see
+   `writing-plans` (section 4a, "Terminal `security-gate` phase") and the
+   `research-plan-implement` orchestrator. Per-phase security-reviewer
+   invocation is deliberately removed from this skill: the reviewer cost
+   tracks diff size, not phase count, so one review over the aggregated
+   diff is both cheaper and more accurate than N per-phase reviews.
 
 6. Summarize results
 
@@ -279,6 +290,64 @@ Plan updated: docs/plans/YYYY-MM-DD-<topic>-plan.md
 
 All success criteria met.
 ```
+
+## Per-phase review gate
+
+Per-phase review is deterministic: it runs through
+`~/.claude/scripts/implement-review-gate.sh`, a 2-pass
+implementer→reviewer loop. The skill does not call `code-reviewer`
+directly in free-form prose — it invokes the gate, which owns the
+control flow, writes the `.review-verdict[-<group_id>]` sentinel, and
+returns a well-defined exit code.
+
+### Contract recap
+
+- **Sentinel:** `.review-verdict[-<group_id>]`. Reviewer writes exactly
+  `REVIEW_APPROVED` on PASS, or a bulleted list of blocking issues on
+  CHANGES. The gate deletes stale sentinels before pass 1.
+- **Exit codes:** `0` PASS, `42` EX_REVIEW_UNRESOLVED (both passes
+  CHANGES), anything else = implementer/reviewer crash.
+- **Group id:** read from the plan's `review_group` field on the phase
+  (or group of phases). Pass via `--group-id <id>`.
+
+### Invocation skeleton
+
+```bash
+~/.claude/scripts/implement-review-gate.sh \
+  --group-id   "<review_group>" \
+  --implementer-cmd "<remediation command — re-run the relevant
+                     implementer with findings piped on stdin>" \
+  --reviewer-cmd    "<spawn code-reviewer against the current diff,
+                     writing sentinel at \$REVIEW_SENTINEL>"
+```
+
+### Cap-hit handoff (exit 42)
+
+On cap-hit the skill MUST:
+
+1. Print both rounds of reviewer findings verbatim to the conversation.
+2. Stop. Do NOT advance to the next phase. Do NOT invoke the gate a
+   third time.
+3. Hand control to the user, who decides the remediation path (fix
+   manually, accept the finding as out-of-scope, amend the plan, or
+   abort).
+
+### Interaction with `review_group` shapes
+
+The planner (via `writing-plans`) assigns every phase a `review_group`
+id and picks one of three shapes. The implementer-side behaviour per
+shape:
+
+| Shape | Implementer behaviour | Gate invocation |
+| ----- | --------------------- | --------------- |
+| **Solo** (1 phase = 1 group) | Implement the phase; invoke the gate once when the phase completes. | `--group-id <phase-specific id>` |
+| **Batched sequential** (N small phases, 1 group) | A single implementer runs ALL N phases in order, then invokes the gate **once** over the aggregated diff. Do NOT review each phase individually. | `--group-id <shared id>` |
+| **Fan-out + consolidator** (parallel phases, 1 group) | The consolidator implementer waits for fan-out outputs, assembles the unified diff, then invokes the gate **once**. | `--group-id <shared id>` |
+
+**Per-phase security review is deliberately absent.** Security review
+runs exactly once at plan level via the terminal `security-gate` phase
+— do not insert a per-phase security-reviewer invocation anywhere in
+this skill's flow.
 
 ## Core Principles
 
@@ -434,7 +503,10 @@ At completion:
 
 - [ ] All plan steps marked done
 - [ ] All verifications passed
-- [ ] Code review completed (code-reviewer agent)
-- [ ] Security review completed (security-reviewer agent)
+- [ ] Per-phase code review completed via `implement-review-gate.sh`
+  (exit 0 or interactive override after cap-hit)
+- [ ] **Per-phase security review NOT run** — it happens once at plan
+  end as the terminal `security-gate` phase, orchestrated by
+  `research-plan-implement`, not here
 - [ ] Plan document updated with completion status
 - [ ] Final summary provided
