@@ -24,9 +24,11 @@ Before using this skill, verify:
 2. All verifications passed
 3. Code review completed (if applicable)
 4. Security review completed (if applicable)
-5. Plan path identified (if invoked via `research-plan-implement`); otherwise search
-   `docs/plans/` for the matching plan before running Step 5. If no plan is found, Step 5
-   prints an info line and skips.
+5. Plan path identified: if invoked via `research-plan-implement`, the plan path arrives
+   as the skill's `$ARGUMENTS` string (the orchestrator invokes `finishing-work` via the
+   Skill tool with `args: '<plan path>'`); otherwise, search `docs/plans/` for a
+   `*-plan.md` whose slug matches the current branch name (see Step 5 for the concrete
+   heuristic). If no plan is found, Step 5 is a no-op.
 
 **Do not proceed with failing tests.** Fix them first.
 
