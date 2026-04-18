@@ -385,7 +385,10 @@ only security review in the plan — no group runs security-reviewer on its own.
    orientation. Do NOT pipe per-phase reviewer summaries — the reviewer works off the unified diff.
 2. The reviewer writes `.review-verdict-security` per the sentinel contract.
 3. Read the sentinel:
-   - **`REVIEW_APPROVED`** → security PASS. Proceed to `finishing-work`.
+   - **`REVIEW_APPROVED`** → security PASS. Proceed to `finishing-work`. The orchestrator
+     invokes `finishing-work` via the Skill tool and passes the plan path as the `args`
+     string (e.g. `args: 'docs/plans/2026-04-18-<topic>-plan.md'`) — this is the concrete
+     mechanism the `finishing-work` skill's Step 5 reads to locate the plan doc.
    - **Findings list (CHANGES)** → spawn a remediation implementer under `implement-review-gate.sh --group-id security
      --reviewer-cmd <spawn security-reviewer>`. The gate owns the 2-pass cap.
 4. Gate outcomes for the remediation loop:
@@ -409,13 +412,14 @@ Final PR: [url or "none raised — see plan"]
 Files changed: [list]
 Tests: [pass/fail]
 Reviews: [per-group code-review verdicts, terminal security-gate verdict]
-Verification: none | pending — see plan §Post-Merge Verification
+Verification: none | pending | completed — see plan §Post-Merge Verification
 ```
 
 Verification handoff lives in `finishing-work`; the orchestrator does not itself gate on
-`## Post-Merge Verification`. The orchestrator's only responsibility is to include the
-`Verification:` line in the final report based on whether `finishing-work` reported a
-pending marker.
+`## Post-Merge Verification`. The `Verification:` value is sourced from `finishing-work`'s
+Status Reporting output (see the `finishing-work` skill's Status Reporting section for the
+derivation rule: `none` / `pending` / `completed`). The orchestrator's only responsibility
+is to transcribe that value into the final report.
 
 If any implementer reported deviations or blockers, present them and ask the user how to proceed.
 
