@@ -98,20 +98,16 @@ Spawn a subagent with the Agent tool:
   name: "codebase-researcher"
   model: "sonnet"
   prompt: "Research [feature area] for the goal: [what will be implemented].
+The research question is fully specified — skip Phase 1 questioning.
 
-1. Invoke the Skill tool with skill: 'researching-codebase'
-   and args: '[feature area]'
-2. Follow the skill's full methodology (interrogation, exploration,
-   documentation)
-3. Where the research question concerns current runtime behaviour
-   (data shape, log patterns, CLI output), gather runtime evidence
-   per the 'Gather Runtime Evidence (When Applicable)' subsection
-   of the researching-codebase skill. Tag findings inline
-   [OBSERVED] (backed by runtime evidence) or [INFERRED] (read
-   off source only).
-4. Write your findings to docs/plans/YYYY-MM-DD-<topic>-codebase.md.
-   Aim for ≤200 lines; include everything decision-critical, omit
-   exploratory notes and raw file listings. Not a hard cap."
+Invoke the Skill tool with skill: 'researching-codebase' and args:
+'[feature area]'. Where the question concerns runtime behaviour,
+gather runtime evidence per the skill's runtime-evidence subsection
+and tag findings [OBSERVED] or [INFERRED].
+
+Write findings to docs/plans/YYYY-MM-DD-<topic>-codebase.md. Aim for
+≤200 lines; include everything decision-critical, omit exploratory
+notes and raw file listings. Not a hard cap."
 ```
 
 **Web researcher (when external context needed):**
@@ -209,37 +205,17 @@ Spawn a subagent with the Agent tool:
   model: "opus"
   prompt: "You are creating an implementation plan.
 
-1. Read the research document at
-   docs/plans/YYYY-MM-DD-<topic>-research.md
-2. Invoke the Skill tool with skill: 'writing-plans' and
-   args: '<topic>'
-3. Follow the skill's full methodology to create the plan
-4. Write the plan to docs/plans/YYYY-MM-DD-<topic>-plan.md
+Read the research document at docs/plans/YYYY-MM-DD-<topic>-research.md,
+then invoke the Skill tool with skill: 'writing-plans' and args:
+'<topic>'. Follow the skill's full methodology and write the plan to
+docs/plans/YYYY-MM-DD-<topic>-plan.md.
 
-Size each phase so it is one clear task a single implementer can
-hold in context end-to-end — not a grab-bag of loosely related work.
-If a phase is growing broad, split it.
-
-For EACH phase, the plan must include an 'Execution' block with:
-  - Scope: one-sentence description of the implementer's task
-  - Depends on: list of prior phase names (or 'none')
-  - Parallel with: list of phase names that can run concurrently
-    (or 'none' — sequential is the default)
-  - Gate: either 'autonomous' OR a described review gate. Pick the
-    mechanism that fits the phase (examples: orchestrator pauses and
-    asks the user to review before the next phase; implementer opens
-    a sub-PR into a feature branch and stops until merged; etc.).
-    There is no implicit default — every phase must state this
-    explicitly.
-
-The overall plan must also state the branch/PR strategy at the top
-(e.g. single PR to main at the end, or feature branch with per-phase
-sub-PRs, or other). Pick what fits; feature-branch-with-sub-PRs is
-one common option when multiple phases need review.
-
-The plan must reference the research document and be self-contained.
-Do NOT ask the user questions — use the research document as your
-source of truth for requirements and constraints."
+The plan must be self-contained and reference the research document.
+Do NOT ask the user questions — the research document is your source
+of truth. Every phase must include an Execution block (scope,
+depends-on, parallel-with, gate, review_group) per writing-plans §4a,
+and the plan must state the overall branch/PR strategy and end with
+a terminal security-gate phase."
 ```
 
 ### Present Plan and Gate
@@ -293,14 +269,7 @@ Walk the review_groups respecting `depends on`. **Sequential is the default.** S
 (in a single message with multiple Agent calls) ONLY when the plan explicitly marks groups as `parallel with` each other
 AND their dependencies are satisfied.
 
-For each review_group (or parallel group of groups), spawn exactly ONE implementer. The shape of the group determines
-what that single implementer does:
-
-| Shape | Implementer behaviour |
-| ----- | --------------------- |
-| **Solo** (1 phase = 1 group) | Implement the phase, then invoke `implement-review-gate.sh --group-id <id>` once. |
-| **Batched sequential** (N small phases = 1 group) | One implementer runs ALL N phases in order, then invokes the gate ONCE over the aggregated diff. Never review phase-by-phase. |
-| **Fan-out + consolidator** (parallel phases = 1 group) | Fan-out implementers produce partial outputs; the consolidator assembles the unified diff then invokes the gate ONCE. |
+For each review_group (or parallel group of groups), spawn exactly ONE implementer. See `writing-plans` §4a for the three shapes (Solo / Batched sequential / Fan-out + consolidator) and the implementer behaviour each implies. In all shapes the gate is invoked exactly ONCE over the aggregated diff — never per phase inside a group.
 
 The gate script (`~/.claude/scripts/implement-review-gate.sh`) is the 2-pass implementer→code-reviewer loop. It writes
 `.review-verdict[-<group_id>]` and returns:
@@ -317,54 +286,21 @@ Spawn a subagent with the Agent tool:
   name: "implementer-<group-id>"
   model: "opus"
   isolation: "worktree"
-  prompt: "You are implementing ONE review_group of an approved plan.
-Plan artefacts under docs/plans/ are transient scaffolding — do not
-cite them in code, comments, or commit messages.
+  prompt: "You are implementing ONE review_group: <group-id>.
+Your phases within this group: <ordered list of this group's phase
+names, interpolated by the orchestrator>.
 
-NOTE: You are running in an isolated worktree (isolation: worktree).
-The implementing-plans skill will detect this via 'test -f .git' and
-skip the worktree offer — this is expected behavior.
+Read only your group's phase sections plus each phase's Execution
+block. Do not read phases assigned to other groups.
 
-Plan: docs/plans/YYYY-MM-DD-<topic>-plan.md
-Your review_group: <group-id>
-Your phases within this group: <list of phase names, in order>
-Group shape: <Solo | Batched sequential | Fan-out + consolidator>
-Your scope is limited to this group only. Do NOT start work on any
-phase outside this group. Other groups have their own implementers.
+Invoke the Skill tool with skill: 'implementing-plans' and args:
+'docs/plans/YYYY-MM-DD-<topic>-plan.md'. Execute your phases' steps
+in order, running verification after each step. At group completion,
+invoke ~/.claude/scripts/implement-review-gate.sh exactly ONCE with
+--group-id <group-id>. Commit ALL changes before completing.
 
-1. Read only your group's phase sections plus each phase's Execution
-   block (scope, gate, review_group, branch strategy). Do not read
-   phases assigned to other groups.
-   Your phases: <ordered list of this group's phase names, interpolated
-   by the orchestrator>.
-2. Invoke the Skill tool with skill: 'implementing-plans' and
-   args: 'docs/plans/YYYY-MM-DD-<topic>-plan.md'
-3. Follow the skill's methodology for YOUR group only:
-   - Execute your phases' steps in order (all N phases for a
-     Batched-sequential group; or your single phase for Solo; or
-     consolidate fan-out outputs into the unified diff for Consolidator)
-   - Run verification after each step
-   - At group completion, invoke
-     ~/.claude/scripts/implement-review-gate.sh exactly ONCE over the
-     aggregated diff with --group-id <group-id>. Handle exit 0 (PASS),
-     42 (cap-hit → drop to interactive with both rounds of findings),
-     and any other non-zero (implementer/reviewer crash) per the
-     implementing-plans skill contract.
-   - Do NOT run per-phase security review. Plan-level security review
-     runs once at the terminal security-gate phase under orchestrator
-     control (see writing-plans section 4a).
-4. Update the plan document status for YOUR group's steps.
-5. Respect the group's Gate spec: if it says open a sub-PR and
-   stop, do that; if it says autonomous, just commit and finish.
-6. CRITICAL: git commit ALL changes before completing — uncommitted
-   work in an isolated worktree is silently destroyed on cleanup.
-
-The implementing-plans skill carries the EVERGREEN CODE RULE (see its
-Core Principles section "Keep Code and Comments Evergreen") — follow it.
-
-Execute the group as written. If you encounter issues requiring plan
-changes, document them and return the issue — do NOT deviate silently
-and do NOT bleed into adjacent groups."
+The implementing-plans skill carries the EVERGREEN CODE RULE — follow
+it. Plan artefacts are scaffolding; do not cite them in code."
 ```
 
 ### Step 3: Honour Gates Between review_groups
@@ -492,8 +428,8 @@ Use explicit `model` parameters when spawning subagents:
 | Model    | Use For                                                                   | Rationale             |
 | -------- | ------------------------------------------------------------------------- | --------------------- |
 | `haiku`  | simple verification (exit-code reads, file-existence checks, pass/fail)   | Fast, cost-effective  |
-| `sonnet` | research agents, synthesis, code-reviewers, security-reviewer, planner    | Balanced capability   |
-| `opus`   | implementers (code generation, architectural decisions)                   | Deep reasoning needed |
+| `sonnet` | research agents, synthesis, code-reviewers, security-reviewer             | Balanced capability   |
+| `opus`   | planner, implementers (code generation, architectural decisions)          | Deep reasoning needed |
 
 Never route architectural decisions to haiku.
 

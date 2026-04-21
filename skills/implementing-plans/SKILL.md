@@ -284,15 +284,7 @@ On cap-hit the skill MUST:
 
 ### Interaction with `review_group` shapes
 
-The planner (via `writing-plans`) assigns every phase a `review_group`
-id and picks one of three shapes. The implementer-side behaviour per
-shape:
-
-| Shape | Implementer behaviour | Gate invocation |
-| ----- | --------------------- | --------------- |
-| **Solo** (1 phase = 1 group) | Implement the phase; invoke the gate once when the phase completes. | `--group-id <phase-specific id>` |
-| **Batched sequential** (N small phases, 1 group) | A single implementer runs ALL N phases in order, then invokes the gate **once** over the aggregated diff. Do NOT review each phase individually. | `--group-id <shared id>` |
-| **Fan-out + consolidator** (parallel phases, 1 group) | The consolidator implementer waits for fan-out outputs, assembles the unified diff, then invokes the gate **once**. | `--group-id <shared id>` |
+The planner (via `writing-plans`) assigns every phase a `review_group` id and picks one of three shapes (Solo / Batched sequential / Fan-out + consolidator). See `writing-plans` §4a for shape definitions. Regardless of shape, the implementer invokes the gate **once** per group over the aggregated diff — never per phase inside a group.
 
 **Per-phase security review is deliberately absent.** Security review
 runs exactly once at plan level via the terminal `security-gate` phase

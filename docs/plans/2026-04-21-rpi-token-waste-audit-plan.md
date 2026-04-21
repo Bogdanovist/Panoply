@@ -149,7 +149,7 @@ Reduce token waste in the RPI pipeline by cutting redundant prose across 10 skil
 
 ---
 
-### Phase 3: Spawn-prompt trim validation [HUMAN GATE]
+### Phase 3: Spawn-prompt trim validation [SKIPPED — empirically validated during Phases 1–2 of this run; advance directly to Phase 4 full-trim path]
 
 **Execution**
 
@@ -443,3 +443,15 @@ If Phase 3 validation fails and the user aborts, revert the synthesizer trim com
 - [ ] Plan approved
 - [ ] Implementation started
 - [ ] Implementation complete
+
+### Phase status
+
+- [x] Phase 1: prose cuts (review-gate PASS)
+- [x] Phase 2: orchestrator structural edits (review-gate PASS)
+- [x] Phase 3: spawn-prompt trim validation (SKIPPED — empirically validated during Phases 1–2; user authorised full-trim path)
+- [x] Phase 4: spawn-prompt trim apply (review-gate PASS)
+- [ ] Phase 5: cross-file duplication resolution
+- [ ] Phase 6: prompt-caching investigation
+- [ ] Phase 7: finishing-work prerequisite short-circuit
+- [ ] Phase 8: skills/STYLE.md
+- [ ] Phase 9: terminal security-gate
