@@ -33,9 +33,17 @@ Look for plan at: `docs/plans/YYYY-MM-DD-<topic>-plan.md`
 **If no plan exists:**
 
 - Check stakes level of the requested work
-- Apply enforcement based on stakes
+- Apply enforcement per §2 below
 
-### 2. Offer Worktree Isolation
+### 2. Apply Stakes-Based Enforcement
+
+**High Stakes** (architectural, security-sensitive, hard to rollback): **Cannot proceed without an approved plan.** Invoke the `writing-plans` skill first. Stop — do not proceed.
+
+**Medium Stakes** (multiple files, moderate impact): Use `AskUserQuestion` with options "Create a plan first (recommended)" / "Proceed with caution" / "Cancel".
+
+**Low Stakes** (isolated, easy rollback): Proceed with inline planning; mention `writing-plans` and `researching-codebase` as optional improvements.
+
+### 3. Offer Worktree Isolation
 
 Before making changes, offer to create an isolated worktree.
 
@@ -100,7 +108,7 @@ action: "discard" to clean up the worktree without preserving changes.
 > ([#27749](https://github.com/anthropics/claude-code/issues/27749)).
 > Always verify the working directory after entering a worktree.
 
-### 3. Initialize Progress Tracking
+### 4. Initialize Progress Tracking
 
 Create tasks from plan steps using TaskCreate:
 
@@ -114,7 +122,7 @@ Read each step from the plan and create a corresponding task:
 - Use `addBlockedBy` via TaskUpdate when plan steps have sequential
   requirements (e.g., Step 1.2 depends on Step 1.1)
 
-### 4. Execute Steps in Order
+### 5. Execute Steps in Order
 
 For each step in the plan:
 
@@ -127,7 +135,7 @@ For each step in the plan:
 7. **Mark completed** - Update task via TaskUpdate immediately
 8. **Update plan** - Mark step complete in plan document
 
-### 5. Checkpoint After Phases
+### 6. Checkpoint After Phases
 
 After completing each phase:
 
@@ -148,7 +156,7 @@ Use AskUserQuestion:
 - "Review changes so far"
 - "Pause implementation"
 
-### 6. Handle Failures
+### 7. Handle Failures
 
 When verification fails:
 
@@ -173,7 +181,7 @@ Use AskUserQuestion:
 - "Return to planning"
 - "Cancel implementation"
 
-### 7. Complete Implementation
+### 8. Complete Implementation
 
 When all steps are done:
 

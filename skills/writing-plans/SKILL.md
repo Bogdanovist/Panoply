@@ -443,6 +443,16 @@ repo CI]
 - [ ] Implementation complete
 ```
 
+### 7. Request Approval
+
+Present a brief summary (topic, stakes, phase/step counts, plan path) and use `AskUserQuestion` with options:
+
+- "Approve and implement" — mark approved and invoke `implementing-plans`
+- "Request changes" — specify what to modify
+- "Return to research" — gather more context first
+
+*(When invoked from the RPI orchestrator, the orchestrator's Phase 2 gate replaces this — the skill hands the completed plan back and the orchestrator runs the approval prompt.)*
+
 ## Plan Iteration
 
 If a plan already exists at `docs/plans/YYYY-MM-DD-<topic>-plan.md`:

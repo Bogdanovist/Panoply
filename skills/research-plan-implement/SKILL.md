@@ -109,7 +109,9 @@ Spawn a subagent with the Agent tool:
    of the researching-codebase skill. Tag findings inline
    [OBSERVED] (backed by runtime evidence) or [INFERRED] (read
    off source only).
-4. Write your findings to docs/plans/YYYY-MM-DD-<topic>-codebase.md"
+4. Write your findings to docs/plans/YYYY-MM-DD-<topic>-codebase.md.
+   Aim for ≤200 lines; include everything decision-critical, omit
+   exploratory notes and raw file listings. Not a hard cap."
 ```
 
 **Web researcher (when external context needed):**
@@ -122,7 +124,9 @@ Spawn a subagent with the Agent tool:
 practice].
 
 Provide findings with source citations and confidence assessment.
-Write your findings to docs/plans/YYYY-MM-DD-<topic>-external.md"
+Write your findings to docs/plans/YYYY-MM-DD-<topic>-external.md.
+Aim for ≤200 lines; include everything decision-critical, omit
+exploratory notes and raw file listings. Not a hard cap."
 ```
 
 Note: state inspection is NOT a separate subagent — the codebase-researcher above handles it via the runtime-evidence subsection of researching-codebase.
@@ -165,7 +169,9 @@ Spawn a subagent with the Agent tool:
    - docs/plans/YYYY-MM-DD-<topic>-external.md
    - [any additional research files]
 3. Write the consolidated document to:
-   docs/plans/YYYY-MM-DD-<topic>-research.md"
+   docs/plans/YYYY-MM-DD-<topic>-research.md.
+   Aim for ≤200 lines; include everything decision-critical, omit
+   exploratory notes and raw file listings. Not a hard cap."
 ```
 
 ### Step 4: Present Summary and Gate
@@ -312,6 +318,8 @@ Spawn a subagent with the Agent tool:
   model: "opus"
   isolation: "worktree"
   prompt: "You are implementing ONE review_group of an approved plan.
+Plan artefacts under docs/plans/ are transient scaffolding — do not
+cite them in code, comments, or commit messages.
 
 NOTE: You are running in an isolated worktree (isolation: worktree).
 The implementing-plans skill will detect this via 'test -f .git' and
@@ -324,8 +332,11 @@ Group shape: <Solo | Batched sequential | Fan-out + consolidator>
 Your scope is limited to this group only. Do NOT start work on any
 phase outside this group. Other groups have their own implementers.
 
-1. Read the plan, focusing on your group's phase sections and their
-   Execution blocks (scope, gate, review_group, branch strategy).
+1. Read only your group's phase sections plus each phase's Execution
+   block (scope, gate, review_group, branch strategy). Do not read
+   phases assigned to other groups.
+   Your phases: <ordered list of this group's phase names, interpolated
+   by the orchestrator>.
 2. Invoke the Skill tool with skill: 'implementing-plans' and
    args: 'docs/plans/YYYY-MM-DD-<topic>-plan.md'
 3. Follow the skill's methodology for YOUR group only:
@@ -348,15 +359,8 @@ phase outside this group. Other groups have their own implementers.
 6. CRITICAL: git commit ALL changes before completing — uncommitted
    work in an isolated worktree is silently destroyed on cleanup.
 
-EVERGREEN CODE RULE: The plan, research, and any docs/plans/ files are
-transient scaffolding — they are gitignored or deleted after merge.
-Code, comments, docstrings, and commit messages MUST NOT reference
-them. Do NOT write things like 'see the plan', 'per Phase 2', 'added
-in the <topic> implementation', 'as described in docs/plans/...', or
-'see research doc for rationale'. If a rationale is worth capturing,
-inline it in the comment itself in self-contained terms. The reader a
-year from now will have no plan, no research, and no RPI context — the
-code must stand on its own.
+The implementing-plans skill carries the EVERGREEN CODE RULE (see its
+Core Principles section "Keep Code and Comments Evergreen") — follow it.
 
 Execute the group as written. If you encounter issues requiring plan
 changes, document them and return the issue — do NOT deviate silently
@@ -386,7 +390,18 @@ only security review in the plan — no group runs security-reviewer on its own.
 
 1. Spawn the `security-reviewer` agent with three inputs: the aggregated diff from `git diff $base_ref..HEAD` (using
    the `base_ref` captured in Step 0), the plan document path, and the ordered list of phase names for scope
-   orientation. Do NOT pipe per-phase reviewer summaries — the reviewer works off the unified diff.
+   orientation. Do NOT pipe per-phase reviewer summaries — the reviewer works off the unified diff. Spawn with
+   explicit `model: "sonnet"` so the agent does not inherit the orchestrator's opus model:
+
+   ```text
+   Spawn a subagent with the Agent tool:
+     name: "security-reviewer"
+     model: "sonnet"
+     prompt: "Review the aggregated diff at git diff $base_ref..HEAD for
+   security issues. Plan: docs/plans/YYYY-MM-DD-<topic>-plan.md.
+   Phases: <ordered phase-name list>. Write the verdict sentinel to
+   $REVIEW_SENTINEL per the security-review skill's sentinel contract."
+   ```
 2. The reviewer writes `.review-verdict-security` per the sentinel contract.
 3. Read the sentinel:
    - **`REVIEW_APPROVED`** → security PASS. Proceed to `finishing-work`. The orchestrator
@@ -474,11 +489,13 @@ This ensures the orchestrator's context remains small, leaving maximum context f
 
 Use explicit `model` parameters when spawning subagents:
 
-| Model    | Use For                                | Rationale             |
-| -------- | -------------------------------------- | --------------------- |
-| `haiku`  | file-finder, quick lookups             | Fast, cost-effective  |
-| `sonnet` | research agents, synthesis, code review | Balanced capability  |
-| `opus`   | planning, implementation, architecture | Deep reasoning needed |
+| Model    | Use For                                                                   | Rationale             |
+| -------- | ------------------------------------------------------------------------- | --------------------- |
+| `haiku`  | simple verification (exit-code reads, file-existence checks, pass/fail)   | Fast, cost-effective  |
+| `sonnet` | research agents, synthesis, code-reviewers, security-reviewer, planner    | Balanced capability   |
+| `opus`   | implementers (code generation, architectural decisions)                   | Deep reasoning needed |
+
+Never route architectural decisions to haiku.
 
 ## Anti-Patterns
 

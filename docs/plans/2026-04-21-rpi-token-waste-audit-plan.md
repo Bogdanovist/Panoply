@@ -75,7 +75,7 @@ Reduce token waste in the RPI pipeline by cutting redundant prose across 10 skil
 #### Step 1.4: Delete implementing-plans dead/duplicate sections (F8)
 
 - **Files**: `skills/implementing-plans/SKILL.md` ll.43–81 (stakes enforcement / "If no plan exists"), ll.407–430 (Progress Documentation), ll.460–482 (Verification Techniques)
-- **Action**: Delete the three sections. Preserve gate mechanics, EVERGREEN CODE RULE in Core Principles §3, worktree detection, and Step 1–5 core flow.
+- **Action**: Compress Progress Documentation and Verification Techniques (both are duplicates). **Do NOT delete** the Stakes-Based Enforcement section — it is a load-bearing gate for standalone invocations of `implementing-plans`. Compress it to ~10 lines (High: hard stop, invoke writing-plans; Medium: AskUserQuestion; Low: inline). Preserve gate mechanics, EVERGREEN CODE RULE in Core Principles §3, worktree detection, and Step 1–5 core flow. *(Amended 2026-04-21 after Phase 1 review-gate flagged the original full deletion as removing a load-bearing gate.)*
 - **Verify**: `wc -l` dropped by ~92; EVERGREEN CODE RULE still present once in Core Principles §3; `grep -c "EVERGREEN" skills/implementing-plans/SKILL.md` returns 1.
 - **Complexity**: Small
 
@@ -88,8 +88,8 @@ Reduce token waste in the RPI pipeline by cutting redundant prose across 10 skil
 
 #### Step 1.6: Delete writing-plans Anti-Patterns + trivial bad examples + Request Approval block (F13)
 
-- **Files**: `skills/writing-plans/SKILL.md` ll.234–263 (two trivial bad-task examples), ll.495–510 (Request Approval prose duplicated in RPI Phase 2 gate), ll.530–555 (Anti-Patterns)
-- **Action**: Keep only the "no test cases" bad example (ll.234–263 — retain the non-obvious one, delete the other two). Delete Request Approval prose block. Delete Anti-Patterns section. Preserve Quality Checklist.
+- **Files**: `skills/writing-plans/SKILL.md` ll.234–263 (two trivial bad-task examples), ll.495–510 (Request Approval), ll.530–555 (Anti-Patterns)
+- **Action**: Keep only the "no test cases" bad example. Compress Request Approval to ~8 lines (summary + AskUserQuestion with three options + one-line note about RPI orchestrator substitution) — **do NOT delete it**; it is the standalone-invocation approval gate. Delete Anti-Patterns. Preserve Quality Checklist. *(Amended 2026-04-21 after Phase 1 review-gate flagged the original full deletion.)*
 - **Verify**: `wc -l` dropped by ~62; Quality Checklist header still present; "No test cases enumerated" bad example retained.
 - **Complexity**: Small
 
