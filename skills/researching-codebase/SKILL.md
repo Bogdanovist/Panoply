@@ -8,14 +8,6 @@ argument-hint: topic or question to research
 
 Research topic: **$ARGUMENTS**
 
-## Overview
-
-Help turn research requests into thorough codebase understanding through natural collaborative dialogue.
-
-Start by understanding what the user needs to learn, then ask questions one at a time to refine the scope. Once you
-understand what you're researching, explore the codebase systematically, presenting findings in digestible sections and
-validating as you go.
-
 ## The Iron Law
 
 **Ask questions BEFORE exploring code.**
@@ -60,12 +52,7 @@ If anything needs clarification, ask follow-up questions.
 
 ### Locate Relevant Files
 
-Use the **file-finder** agent to locate files relevant to the research objective:
-
-```text
-Task tool with subagent_type: "file-finder"
-Prompt: "Find files related to [topic from interrogation]. Goal: [user's stated purpose]"
-```
+Spawn a `file-finder` agent with the research topic and the user's stated purpose.
 
 The file-finder will return a structured report with:
 
@@ -142,12 +129,7 @@ only are tagged `[INFERRED]`.
 For single-page lookups (e.g., checking a library's API docs or a specific GitHub issue), use WebFetch directly instead
 of spawning a web-researcher agent. Reserve the web-researcher for multi-source research requiring synthesis.
 
-If codebase exploration reveals external factors that need broader investigation, use the **web-researcher** agent:
-
-```text
-Task tool with subagent_type: "web-researcher"
-Prompt: "[specific research question about external topic]"
-```
+If codebase exploration reveals external factors that need broader investigation, spawn a `web-researcher` agent with the specific research question.
 
 Use web research for:
 

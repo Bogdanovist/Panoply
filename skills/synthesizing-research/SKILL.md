@@ -8,12 +8,6 @@ argument-hint: topic to synthesize research for
 
 Consolidate research for: **$ARGUMENTS**
 
-## Purpose
-
-When research is conducted in parallel — multiple agents exploring different aspects of a problem — each produces a
-separate findings file. This skill combines those files into one self-contained document that a reader with no prior
-context can understand completely.
-
 ## Process
 
 ### 1. Locate Research Files

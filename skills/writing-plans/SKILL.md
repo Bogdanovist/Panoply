@@ -8,12 +8,6 @@ argument-hint: feature or change to plan
 
 Create an implementation plan for: **$ARGUMENTS**
 
-## Purpose
-
-Planning transforms research findings into actionable implementation strategy. A good plan enables disciplined
-execution by breaking work into granular tasks with clear verification criteria. Plans serve as contracts between human
-and AI, ensuring alignment before code is written.
-
 ## Process
 
 ### 1. Check for Research
@@ -32,12 +26,7 @@ If no research exists:
 
 - Ask if research should be conducted first
 - For high-stakes tasks, recommend research first
-- For low-stakes tasks, use the **file-finder** agent to locate relevant files:
-
-```text
-Task tool with subagent_type: "file-finder"
-Prompt: "Find files related to [task]. Goal: [what will be implemented]"
-```
+- For low-stakes tasks, spawn a `file-finder` agent with the task description and goal.
 
 ### 2. Define Success Criteria
 
@@ -72,13 +61,7 @@ Decompose work into granular, verifiable steps.
 
 **Identify target files:**
 
-Use file paths from research document, or if unavailable, use the **file-finder** agent to locate files for each task
-area:
-
-```text
-Task tool with subagent_type: "file-finder"
-Prompt: "Find files for [specific task]. Looking for [what to modify]"
-```
+Use file paths from research document, or if unavailable, spawn a `file-finder` agent for each task area with the task and the modification target.
 
 **For each task include:**
 
@@ -116,12 +99,7 @@ parallelization.
 For quick lookups (checking a library's API, reading a specific doc page), use WebFetch directly. Reserve the
 web-researcher agent for multi-source investigation.
 
-If the plan involves unfamiliar libraries, APIs, or patterns, use the **web-researcher** agent to inform task design:
-
-```text
-Task tool with subagent_type: "web-researcher"
-Prompt: "[specific question about implementation approach, library usage, or best practice]"
-```
+If the plan involves unfamiliar libraries, APIs, or patterns, spawn a `web-researcher` agent with the specific question about implementation approach, library usage, or best practice.
 
 **Plan test cases for each task:**
 
@@ -231,25 +209,7 @@ research — do not patch over a broken assumption in the plan.
 - **Complexity**: Small
 ```
 
-#### Bad Task Examples
-
-```markdown
-#### Step 1: Implement feature
-
-- **Action**: Add the new feature
-- **Complexity**: Large
-```
-
-**Problem**: Too vague, no verification, no file references
-
-```markdown
-#### Step 1: Refactor authentication system
-
-- **Action**: Update all auth code to use new pattern
-- **Complexity**: Large
-```
-
-**Problem**: Too large, should be broken into multiple phases
+#### Bad Task Example
 
 ```markdown
 #### Step 1: Add validation function
@@ -340,12 +300,7 @@ Identify what could go wrong:
 - Security considerations
 - Dependencies that might fail
 
-For external dependencies or security concerns, use the **web-researcher** agent to investigate known issues:
-
-```text
-Task tool with subagent_type: "web-researcher"
-Prompt: "Known issues, security vulnerabilities, or breaking changes in [library/API version]"
-```
+For external dependencies or security concerns, spawn a `web-researcher` agent to investigate known issues, security vulnerabilities, or breaking changes in the relevant library/API version.
 
 Include rollback strategy for high-stakes changes.
 
@@ -488,27 +443,6 @@ repo CI]
 - [ ] Implementation complete
 ```
 
-### 7. Request Approval
-
-Present plan summary and request explicit approval:
-
-"Plan created for '$ARGUMENTS' at `docs/plans/YYYY-MM-DD-<topic>-plan.md`.
-
-**Summary**: [brief description]
-**Stakes**: [level]
-**Steps**: [count] steps in [count] phases
-
-Ready to approve and begin implementation?"
-
-Use AskUserQuestion with options:
-
-- "Approve and implement" - Mark approved, proceed to implementing-plans
-- "Request changes" - Specify what to modify
-- "Return to research" - Gather more context first
-
-If approved, invoke the Skill tool with skill "implementing-plans"
-to begin implementation.
-
 ## Plan Iteration
 
 If a plan already exists at `docs/plans/YYYY-MM-DD-<topic>-plan.md`:
@@ -526,33 +460,6 @@ When refining:
 - Preserve approved status if already approved
 - Document changes made
 - Re-request approval for significant changes
-
-## Anti-Patterns to Avoid
-
-### Vague Tasks
-
-**Wrong**: "Update the code"
-**Right**: "Add error handling to fetchUser() in src/api/users.ts:23-45"
-
-### Missing Verification
-
-**Wrong**: Tasks without success criteria
-**Right**: Every task has "Verify:" with specific check
-
-### Skipping Approval
-
-**Wrong**: Proceeding to implementation without confirmation
-**Right**: Explicit AskUserQuestion approval gate
-
-### Over-Planning
-
-**Wrong**: Spending hours planning a 10-minute fix
-**Right**: Match planning rigor to stakes level
-
-### Under-Planning
-
-**Wrong**: "We'll figure it out as we go"
-**Right**: Sufficient detail to enable disciplined execution
 
 ## Quality Checklist
 

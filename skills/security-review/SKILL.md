@@ -12,11 +12,6 @@ argument-hint: scope or focus of the security review
 
 Review implementation changes for security vulnerabilities and risks.
 
-## Purpose
-
-This skill provides methodology for reviewing code changes introduced during implementation. Unlike full codebase
-audits, this focuses on the delta - what was added or modified - to catch security issues before they're committed.
-
 ## Review Scope
 
 ### Determine Changed Files
@@ -125,48 +120,9 @@ Watch for these in changed code:
 9. **Logging Failures** - Missing audit logs, sensitive data in logs
 10. **SSRF** - Unvalidated URLs in server-side requests
 
-### Language-Specific Concerns
-
-**JavaScript/TypeScript**:
-
-- prototype pollution
-- ReDoS in regex patterns
-- unsafe innerHTML/dangerouslySetInnerHTML
-- npm package typosquatting
-
-**Python**:
-
-- pickle deserialization
-- yaml.load without SafeLoader
-- subprocess with shell=True
-- format string vulnerabilities
-
-**Ruby**:
-
-- mass assignment vulnerabilities
-- unsafe YAML loading
-- send/public_send with user input
-- ERB without escaping
-
-**Go**:
-
-- race conditions in concurrent code
-- unsafe pointer operations
-- path traversal in file operations
-
 ## Review Process
 
-### 1. Gather Context
-
-```text
-Reviewing security for implementation: $ARGUMENTS
-
-Changes to review:
-- [list of modified files]
-- [new dependencies if any]
-```
-
-### 2. Analyze Each Change
+### 1. Analyze Each Change
 
 For each modified file:
 
@@ -175,7 +131,7 @@ For each modified file:
 3. Check against applicable checklist items
 4. Note any concerns with file path and line numbers
 
-### 3. Classify Findings
+### 2. Classify Findings
 
 **Critical** - Must fix before proceeding:
 
@@ -206,7 +162,7 @@ For each modified file:
 - Security best practice suggestions
 - Defense in depth opportunities
 
-### 4. Report Findings
+### 3. Report Findings
 
 ```text
 ## Security Review: $ARGUMENTS
@@ -243,12 +199,3 @@ For each modified file:
 
 **FAIL** - Critical or multiple high findings, must address before completion
 
-## Integration with Implementation
-
-When called from implementation phase:
-
-1. Review all changes made during implementation
-2. Reference the plan to understand intended behavior
-3. Focus on security implications of the changes
-4. Report findings clearly with actionable recommendations
-5. Block completion if critical issues found

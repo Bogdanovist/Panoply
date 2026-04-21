@@ -11,12 +11,6 @@ Orchestrate the full Research → Plan → Implement workflow in a single sessio
 separate subagent with its own context window, coordinated by the orchestrator that handles approval gates and phase
 transitions.
 
-## Purpose
-
-Running RPI phases across separate sessions loses context and requires manual bridging. This skill collapses the three
-phases into one orchestrated pipeline using subagents via the Agent tool. Each subagent gets maximum context for its
-work, with file artifacts on disk as the communication channel between phases.
-
 ## Architecture
 
 The orchestrator (you) stays thin. It spawns subagents for each phase via the Agent tool, reads their output artifacts,

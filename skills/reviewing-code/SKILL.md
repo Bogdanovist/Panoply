@@ -13,11 +13,6 @@ argument-hint: scope or focus of the code review
 Deep code reviews that protect architecture, catch correctness issues, and provide mentoring-quality feedback using
 Conventional Comments.
 
-## Purpose
-
-This skill provides methodology for reviewing code changes introduced during implementation. Unlike full codebase
-audits, this focuses on the delta - what was added or modified - to catch quality issues before they're committed.
-
 ## Review Workflow
 
 Follow this order - don't jump to nits.

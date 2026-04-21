@@ -10,11 +10,6 @@ description: >
 
 Evidence before claims, always. No completion claims without fresh verification.
 
-## Purpose
-
-Claiming work is done without verification breaks trust and wastes time. This skill enforces running verification
-commands and confirming output before any success claim. "It should work" is not verification.
-
 ## The Iron Law
 
 **NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE.**
@@ -90,60 +85,6 @@ Only NOW make your completion claim.
 "Implementation complete" - after all verifications pass
 ```
 
-## Common Failure Modes
-
-### Tests
-
-```text
-What to run: Project test command
-What to verify:
-- Exit code 0
-- All tests pass (not just "some tests ran")
-- No skipped tests (unless intentional)
-- No test warnings
-```
-
-### Linting
-
-```text
-What to run: Project lint command
-What to verify:
-- Exit code 0
-- No errors
-- No new warnings (compare to baseline)
-```
-
-### Builds
-
-```text
-What to run: Project build command
-What to verify:
-- Exit code 0
-- Output artifacts created
-- No compilation errors
-- No type errors
-```
-
-### Bug Fixes
-
-```text
-What to run: Steps that reproduced the bug
-What to verify:
-- Bug no longer occurs
-- Related functionality still works
-- Regression test added and passes
-```
-
-### Delegated Work
-
-```text
-What to run: Independent verification of agent's claim
-What to verify:
-- Agent's claimed output exists
-- Output is correct (not just present)
-- No silent failures masked
-```
-
 ## Rationalization Red Flags
 
 | Thought | Reality |
@@ -168,80 +109,6 @@ Implementation complete? → Run all verifications → Claim done
 ```
 
 **Never mark a step complete without verification evidence.**
-
-### Before Commits
-
-```text
-Run before committing:
-1. All tests pass
-2. Lint is clean
-3. Build succeeds
-4. Type check passes (if applicable)
-```
-
-### Before PRs
-
-```text
-Run before creating PR:
-1. All verifications from "Before Commits"
-2. Branch is up to date with base
-3. No merge conflicts
-4. CI would pass (simulate locally if possible)
-```
-
-### Before Claiming "Fixed"
-
-```text
-Run before claiming bug is fixed:
-1. Reproduction steps no longer trigger bug
-2. Regression test added and passes
-3. Related functionality still works
-4. All other tests still pass
-```
-
-## Verification Commands by Project Type
-
-### Node.js / JavaScript
-
-```text
-Tests: npm test
-Lint: npm run lint
-Build: npm run build
-Types: npm run typecheck (or tsc --noEmit)
-```
-
-### Python
-
-```text
-Tests: pytest
-Lint: ruff check . or flake8
-Types: mypy .
-Format: ruff format --check . or black --check .
-```
-
-### Ruby
-
-```text
-Tests: bundle exec rspec
-Lint: bundle exec rubocop
-```
-
-### Go
-
-```text
-Tests: go test ./...
-Lint: golangci-lint run
-Build: go build ./...
-```
-
-### Rust
-
-```text
-Tests: cargo test
-Lint: cargo clippy
-Build: cargo build
-Format: cargo fmt --check
-```
 
 ## Anti-Patterns
 

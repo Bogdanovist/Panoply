@@ -8,12 +8,6 @@ argument-hint: plan file path or feature name
 
 Execute the implementation plan for: **$ARGUMENTS**
 
-## Purpose
-
-Implementation executes an approved plan with discipline and verification. The goal is not just working code, but
-verified, documented progress that matches the plan. Implementation follows the plan strictly, verifying each step
-before proceeding.
-
 ## Process
 
 ### 1. Locate the Plan
@@ -41,46 +35,7 @@ Look for plan at: `docs/plans/YYYY-MM-DD-<topic>-plan.md`
 - Check stakes level of the requested work
 - Apply enforcement based on stakes
 
-### 2. Apply Stakes-Based Enforcement
-
-**High Stakes** (architectural, security-sensitive, hard to rollback):
-
-```text
-Cannot proceed without an approved plan.
-
-High-stakes implementations require:
-1. Research phase (researching-codebase skill)
-2. Approved plan (writing-plans skill)
-
-Invoke the Skill tool with skill "writing-plans" to create a plan first.
-```
-
-Stop and do not proceed.
-
-**Medium Stakes** (multiple files, moderate impact):
-
-```text
-Warning: No approved plan found for '$ARGUMENTS'.
-
-Medium-stakes changes benefit from planning.
-```
-
-Use AskUserQuestion with options:
-
-- "Create a plan first" (recommended)
-- "Proceed with caution"
-- "Cancel"
-
-**Low Stakes** (isolated, easy rollback):
-
-```text
-Note: Consider researching-codebase and writing-plans skills for better results.
-Proceeding with implementation...
-```
-
-Proceed with inline planning.
-
-### 3. Offer Worktree Isolation
+### 2. Offer Worktree Isolation
 
 Before making changes, offer to create an isolated worktree.
 
@@ -145,7 +100,7 @@ action: "discard" to clean up the worktree without preserving changes.
 > ([#27749](https://github.com/anthropics/claude-code/issues/27749)).
 > Always verify the working directory after entering a worktree.
 
-### 4. Initialize Progress Tracking
+### 3. Initialize Progress Tracking
 
 Create tasks from plan steps using TaskCreate:
 
@@ -159,18 +114,12 @@ Read each step from the plan and create a corresponding task:
 - Use `addBlockedBy` via TaskUpdate when plan steps have sequential
   requirements (e.g., Step 1.2 depends on Step 1.1)
 
-### 5. Execute Steps in Order
+### 4. Execute Steps in Order
 
 For each step in the plan:
 
 1. **Mark in_progress** - Update task via TaskUpdate
-2. **Locate target files** - If file path is unclear or missing, use file-finder:
-
-   ```text
-   Task tool with subagent_type: "file-finder"
-   Prompt: "Find [what the step describes]. Need to [action from plan]"
-   ```
-
+2. **Locate target files** - If file path is unclear or missing, spawn a `file-finder` agent with the step description and planned action.
 3. **Read target files** - Always read before modifying
 4. **Make the change** - Follow plan specification exactly
 5. **Run verification** - Execute the verify criteria
@@ -178,7 +127,7 @@ For each step in the plan:
 7. **Mark completed** - Update task via TaskUpdate immediately
 8. **Update plan** - Mark step complete in plan document
 
-### 6. Checkpoint After Phases
+### 5. Checkpoint After Phases
 
 After completing each phase:
 
@@ -199,20 +148,13 @@ Use AskUserQuestion:
 - "Review changes so far"
 - "Pause implementation"
 
-### 7. Handle Failures
+### 6. Handle Failures
 
 When verification fails:
 
 1. **Stop** - Do not proceed to next step
 2. **Report** - Explain what failed and why
-3. **Diagnose** - Investigate the cause. If the error involves external
-   libraries or unfamiliar issues, use web-researcher:
-
-   ```text
-   Task tool with subagent_type: "web-researcher"
-   Prompt: "[error message or issue] in [library/context]"
-   ```
-
+3. **Diagnose** - Investigate the cause. If the error involves external libraries or unfamiliar issues, spawn a `web-researcher` agent with the error message and library/context.
 4. **Propose fix** - Suggest correction based on diagnosis
 
 If fix requires plan changes:
@@ -231,7 +173,7 @@ Use AskUserQuestion:
 - "Return to planning"
 - "Cancel implementation"
 
-### 8. Complete Implementation
+### 7. Complete Implementation
 
 When all steps are done:
 
@@ -402,32 +344,6 @@ Use TaskCreate / TaskUpdate / TaskList for real-time progress:
 - Use TaskList to review overall progress
 - Update plan document with status
 
-## Progress Documentation
-
-### Task-Based Tracking
-
-Maintain real-time visibility using structured tasks:
-
-```text
-TaskCreate: subject="Add validation function", status=pending
-TaskCreate: subject="Update API endpoint", status=pending
-TaskUpdate: taskId=1, status=in_progress
-TaskUpdate: taskId=1, status=completed
-TaskList → shows current state of all tasks
-```
-
-### Plan Document Updates
-
-Update the plan file as implementation progresses:
-
-```markdown
-#### Step 1.1: Add validation function
-
-- **Status**: Complete
-- **Verified**: Unit tests pass
-- **Notes**: Used existing regex pattern from validatePhone()
-```
-
 ## Test-Driven Execution
 
 When plan includes test steps, follow TDD:
@@ -444,45 +360,11 @@ If implementation reveals the plan needs changes:
 
 1. Stop current step
 2. Document the issue
-3. If additional files are needed, use file-finder to locate them:
-
-   ```text
-   Task tool with subagent_type: "file-finder"
-   Prompt: "Find files related to [issue discovered]. Need to [proposed change]"
-   ```
-
+3. If additional files are needed, spawn a `file-finder` agent with the discovered issue and proposed change.
 4. Propose plan modification with updated file references
 5. Get approval before continuing
 
 Never deviate silently from the approved plan.
-
-## Verification Techniques
-
-### Code Verification
-
-For code changes, verify by:
-
-- **Syntax check**: Code compiles/parses without errors
-- **Type check**: TypeScript/type annotations pass
-- **Lint check**: No new linting errors
-- **Unit tests**: Related tests pass
-
-### Behavior Verification
-
-For functionality, verify by:
-
-- **Manual test**: Exercise the feature
-- **Integration test**: Run relevant integration tests
-- **API test**: Hit endpoints and verify responses
-- **UI check**: Visual verification if applicable
-
-### Regression Verification
-
-Ensure no breakage:
-
-- **Full test suite**: Run all tests
-- **Build**: Project builds successfully
-- **Smoke test**: Core functionality works
 
 ## Anti-Patterns to Avoid
 
