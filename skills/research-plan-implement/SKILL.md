@@ -354,6 +354,16 @@ phase outside this group. Other groups have their own implementers.
 6. CRITICAL: git commit ALL changes before completing — uncommitted
    work in an isolated worktree is silently destroyed on cleanup.
 
+EVERGREEN CODE RULE: The plan, research, and any docs/plans/ files are
+transient scaffolding — they are gitignored or deleted after merge.
+Code, comments, docstrings, and commit messages MUST NOT reference
+them. Do NOT write things like 'see the plan', 'per Phase 2', 'added
+in the <topic> implementation', 'as described in docs/plans/...', or
+'see research doc for rationale'. If a rationale is worth capturing,
+inline it in the comment itself in self-contained terms. The reader a
+year from now will have no plan, no research, and no RPI context — the
+code must stand on its own.
+
 Execute the group as written. If you encounter issues requiring plan
 changes, document them and return the issue — do NOT deviate silently
 and do NOT bleed into adjacent groups."

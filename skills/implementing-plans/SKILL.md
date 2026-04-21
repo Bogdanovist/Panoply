@@ -369,6 +369,29 @@ Never claim completion without evidence:
 - Check that changes match expectations
 - Document verification results
 
+### Keep Code and Comments Evergreen
+
+The plan document, research document, and anything under `docs/plans/`
+are transient scaffolding — gitignored or deleted after merge. Code,
+comments, docstrings, and commit messages MUST NOT narrate the
+planning process or reference those artifacts.
+
+Do NOT write:
+
+- `# see the plan for rationale`
+- `# added in Phase 2`
+- `"""Implements the <topic> feature as described in docs/plans/..."""`
+- `# per research doc`
+- `# handles the case from the <topic> implementation`
+
+If a rationale is worth capturing, inline it in the comment itself in
+self-contained terms a future reader can act on without any external
+context. The reader a year from now will have no plan, no research,
+and no memory of the RPI session — the code must stand alone.
+
+Same applies to commit messages and PR descriptions: describe what the
+code does and why, not which phase of which plan produced it.
+
 ### Track Progress Visibly
 
 Use TaskCreate / TaskUpdate / TaskList for real-time progress:
