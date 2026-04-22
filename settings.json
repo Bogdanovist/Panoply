@@ -46,6 +46,5 @@
   "effortLevel": "high",
   "skipDangerousModePermissionPrompt": true,
   "showTurnDuration": true,
-  "teammateMode": "tmux",
-  "model": "sonnet"
+  "teammateMode": "tmux"
 }
