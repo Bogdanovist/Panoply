@@ -165,6 +165,13 @@ When verification fails:
 3. **Diagnose** - Investigate the cause. If the error involves external libraries or unfamiliar issues, spawn a `web-researcher` agent with the error message and library/context.
 4. **Propose fix** - Suggest correction based on diagnosis
 
+If diagnosis reveals the failure is **pre-existing** (broken on `main`,
+unrelated to your change), the default response is *fix it* per the
+"No Broken Windows" rule below — not "note as pre-existing and
+proceed". Only escalate via `AskUserQuestion` when the fix's blast
+radius would materially expand the diff or touches unfamiliar
+subsystems.
+
 If fix requires plan changes:
 
 ```text
@@ -310,6 +317,32 @@ Never claim completion without evidence:
 - Confirm tests pass
 - Check that changes match expectations
 - Document verification results
+
+### No Broken Windows
+
+If you find a pre-existing problem while doing the planned work — a
+failing test, a stale comment, dead code, an obvious bug in a function
+you're touching — **fix it as part of the current change**. You have
+the context now; "later" never comes back with the same context.
+
+Bound the rule by blast radius:
+
+- **Trivial / adjacent** (broken assertion, wrong path, unused import,
+  one-line bug in a function you're already editing): just fix it. No
+  approval needed. Mention the sweep-up in the step's verification
+  output so it appears in the diff review.
+- **Small but unrelated** (separate file, obviously broken, fix is
+  contained): fix it and call it out in the next checkpoint summary.
+- **Large, risky, or controversial** (materially expands the diff,
+  unfamiliar subsystem, ambiguous correct behavior): stop and use
+  `AskUserQuestion` — fold it in, route it elsewhere, or skip with a
+  recorded reason. Do not silently leave it.
+
+Phrases like "this test was already broken so I left it as
+pre-existing" are a failure mode, not an acceptable outcome. The
+sweep-ups are part of the work, not a deviation from it — the
+"Deviation Handling" gate below covers changes to the plan's *intended
+outcome*, not adjacent fixes.
 
 ### Keep Code and Comments Evergreen
 

@@ -124,9 +124,14 @@ Complete each phase in order. Do not skip to implementation.
    - All other tests pass
    - Manual verification if applicable
 
-4. **Check for related issues**
+4. **Check for related issues — and fix the ones you find**
    - Could this bug exist elsewhere?
-   - Should you search for similar patterns?
+   - Search for similar patterns
+   - **Fix the instances you find in this session.** You have full
+     context now; "follow-up ticket" is a synonym for "never". Only
+     escalate to the user when the blast radius would materially
+     expand the diff or touches an unfamiliar subsystem. "Found and
+     left as pre-existing" is not an acceptable outcome.
 
 ## Red Flags: You're Skipping Investigation
 

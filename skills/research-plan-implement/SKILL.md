@@ -103,7 +103,10 @@ The research question is fully specified — skip Phase 1 questioning.
 Invoke the Skill tool with skill: 'researching-codebase' and args:
 '[feature area]'. Where the question concerns runtime behaviour,
 gather runtime evidence per the skill's runtime-evidence subsection
-and tag findings [OBSERVED] or [INFERRED].
+and tag findings [OBSERVED] or [INFERRED]. Apply the skill's
+'Surface Broken Windows' rule — pre-existing brokenness you uncover
+must be captured with a [FIX-INLINE] / [FIX-FOLLOWUP] / [FLAG-HUMAN]
+disposition; 'noted as pre-existing' is not an outcome.
 
 Write findings to docs/plans/YYYY-MM-DD-<topic>-codebase.md. Aim for
 ≤200 lines; include everything decision-critical, omit exploratory
@@ -299,8 +302,13 @@ in order, running verification after each step. At group completion,
 invoke ~/.claude/scripts/implement-review-gate.sh exactly ONCE with
 --group-id <group-id>. Commit ALL changes before completing.
 
-The implementing-plans skill carries the EVERGREEN CODE RULE — follow
-it. Plan artefacts are scaffolding; do not cite them in code."
+The implementing-plans skill carries the EVERGREEN CODE RULE and the
+NO BROKEN WINDOWS RULE — follow both. Plan artefacts are scaffolding;
+do not cite them in code. Pre-existing brokenness you encounter
+(failing tests on main, dead code in files you're touching, obvious
+bugs adjacent to your changes) gets fixed in this group's diff per the
+broken-windows blast-radius rules — 'noted as pre-existing and left'
+is not an acceptable report."
 ```
 
 ### Step 3: Honour Gates Between review_groups
