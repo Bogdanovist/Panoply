@@ -124,14 +124,23 @@ Complete each phase in order. Do not skip to implementation.
    - All other tests pass
    - Manual verification if applicable
 
-4. **Check for related issues — and fix the ones you find**
+4. **Check for related issues — verify each, then fix or escalate**
    - Could this bug exist elsewhere?
    - Search for similar patterns
-   - **Fix the instances you find in this session.** You have full
-     context now; "follow-up ticket" is a synonym for "never". Only
-     escalate to the user when the blast radius would materially
-     expand the diff or touches an unfamiliar subsystem. "Found and
-     left as pre-existing" is not an acceptable outcome.
+   - For each candidate instance: **verify it's actually broken in the
+     same way** (reproduce or trace the failure path; check that
+     callers and tests don't depend on the surprising behavior). A
+     pattern that *looks* like the same bug may be intentional or
+     test-pinned in its own context.
+   - Fix the instances where you can establish all of: (a) verified
+     broken by the same root cause, (b) correct behavior is
+     unambiguous, (c) fix is localized. Otherwise **escalate via
+     AskUserQuestion** with the list of suspected sites and what you
+     could and couldn't verify.
+   - Report fixed instances prominently in your output (commit message
+     bullet, summary section) — do not bury sweep-ups inside step
+     verification text. Both "found and left as pre-existing" AND
+     "swept up without verification" are failure modes.
 
 ## Red Flags: You're Skipping Investigation
 

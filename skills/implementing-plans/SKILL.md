@@ -166,11 +166,13 @@ When verification fails:
 4. **Propose fix** - Suggest correction based on diagnosis
 
 If diagnosis reveals the failure is **pre-existing** (broken on `main`,
-unrelated to your change), the default response is *fix it* per the
-"No Broken Windows" rule below — not "note as pre-existing and
-proceed". Only escalate via `AskUserQuestion` when the fix's blast
-radius would materially expand the diff or touches unfamiliar
-subsystems.
+unrelated to your change), apply the "No Broken Windows" rule below:
+*verify it's actually broken*, then escalate via `AskUserQuestion`
+unless the fix is unambiguous and bounded (auto-fix tier requires all
+three gates — verified, unambiguous, localized to a file already in
+scope). "Note as pre-existing and proceed" is a failure mode; so is
+"swept it up because it looked wrong" without verification. When in
+doubt, escalate.
 
 If fix requires plan changes:
 
@@ -320,29 +322,74 @@ Never claim completion without evidence:
 
 ### No Broken Windows
 
-If you find a pre-existing problem while doing the planned work — a
-failing test, a stale comment, dead code, an obvious bug in a function
-you're touching — **fix it as part of the current change**. You have
-the context now; "later" never comes back with the same context.
+If you find a pre-existing problem while doing the planned work, the
+default response is **verify it's actually broken, then escalate
+unless the fix is unambiguous and bounded**. Two failure modes apply
+symmetrically: silently leaving brokenness ("noted as pre-existing")
+AND silently fixing things that weren't actually broken ("looked wrong
+to me, swept it up"). The second is more dangerous because it adds
+uninvited regressions under the banner of cleanup.
 
-Bound the rule by blast radius:
+**Step 1: Verify it's actually broken.**
 
-- **Trivial / adjacent** (broken assertion, wrong path, unused import,
-  one-line bug in a function you're already editing): just fix it. No
-  approval needed. Mention the sweep-up in the step's verification
-  output so it appears in the diff review.
-- **Small but unrelated** (separate file, obviously broken, fix is
-  contained): fix it and call it out in the next checkpoint summary.
-- **Large, risky, or controversial** (materially expands the diff,
-  unfamiliar subsystem, ambiguous correct behavior): stop and use
-  `AskUserQuestion` — fold it in, route it elsewhere, or skip with a
-  recorded reason. Do not silently leave it.
+Before treating anything as a broken window, do the diligence:
 
-Phrases like "this test was already broken so I left it as
-pre-existing" are a failure mode, not an acceptable outcome. The
-sweep-ups are part of the work, not a deviation from it — the
+- **Reproduce the failure.** Run the test. Trigger the code path. Read
+  the actual output. "Looks wrong" is not evidence.
+- **Read the call sites.** Code that looks dead may be reached via
+  dynamic dispatch, reflection, a config file, or a test harness.
+- **Check git blame and nearby comments** for "intentional" markers
+  (TODO with rationale, deliberate `xfail`, `// known issue tracked at
+  X`, a recent commit explaining the choice). Old code (blame > a few
+  weeks) is more likely load-bearing than recently-broken.
+- **Look for tests that pin the current behavior.** If callers depend
+  on the "wrong" behavior, your fix is a regression, not a fix.
+
+If you can't quickly establish *both* that the thing is broken AND
+that the correct behavior is unambiguous, **it is not a broken window
+— escalate, do not fix.**
+
+**Step 2: Bound the action by what verification proved.**
+
+- **Auto-fix** (no approval needed) requires ALL of: (a) verified
+  broken by reproduction, (b) correct behavior is unambiguous (one
+  reasonable reading, no contradictory tests or callers), AND (c) the
+  fix is one localized change inside a file you're already editing
+  for the planned work. Anything failing any of these gates is NOT
+  auto-fix.
+- **Escalate via `AskUserQuestion`** when ANY of: ambiguity about
+  correct behavior, fix touches a file outside your planned scope,
+  the broken thing has been that way for a while (suggests something
+  may depend on it), you're unsure why the original author wrote it
+  that way, or the fix would materially expand the diff. Default to
+  this tier when in doubt — the cost of asking is low; the cost of a
+  silent regression is high.
+
+**Step 3: Be loud about every sweep-up.**
+
+Every change you made that wasn't in the plan — even auto-fix tier —
+must appear in:
+
+- The **commit message** as a separate bullet, prefixed `sweep:`,
+  citing the verification evidence in one line. Do not bundle invisibly.
+- The **checkpoint summary** as its own line under a "Sweep-ups"
+  heading, not buried inside step verification output.
+
+Silent uninvited fixes are a failure mode. The user must be able to
+audit every change you made that they didn't approve.
+
+**Counter-failures to watch for:**
+
+- "This test was already broken so I left it as pre-existing." — Did
+  you verify it's broken? If yes, did you escalate or auto-fix? If
+  neither: failure mode.
+- "I noticed this looked wrong and cleaned it up while I was there."
+  — Did you reproduce the brokenness? Did you check call sites? Is it
+  in the commit message? If any "no": failure mode.
+
+The sweep-ups are part of the work, not a deviation from it — the
 "Deviation Handling" gate below covers changes to the plan's *intended
-outcome*, not adjacent fixes.
+outcome*, not properly-verified adjacent fixes.
 
 ### Keep Code and Comments Evergreen
 

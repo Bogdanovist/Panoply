@@ -104,9 +104,13 @@ Invoke the Skill tool with skill: 'researching-codebase' and args:
 '[feature area]'. Where the question concerns runtime behaviour,
 gather runtime evidence per the skill's runtime-evidence subsection
 and tag findings [OBSERVED] or [INFERRED]. Apply the skill's
-'Surface Broken Windows' rule — pre-existing brokenness you uncover
-must be captured with a [FIX-INLINE] / [FIX-FOLLOWUP] / [FLAG-HUMAN]
-disposition; 'noted as pre-existing' is not an outcome.
+'Surface Broken Windows' rule — pre-existing issues you uncover get
+captured with a [FIX-INLINE] / [FIX-FOLLOWUP] / [FLAG-HUMAN]
+disposition AND the evidence behind it. Tag conservatively: default
+to [FLAG-HUMAN] when you can't independently verify both that the
+thing is broken and that the correct behavior is unambiguous. The
+planner will downgrade unsupported [FIX-*] tags, so honest
+'don't-know' tags beat optimistic 'looks-broken' tags."
 
 Write findings to docs/plans/YYYY-MM-DD-<topic>-codebase.md. Aim for
 ≤200 lines; include everything decision-critical, omit exploratory
@@ -304,11 +308,17 @@ invoke ~/.claude/scripts/implement-review-gate.sh exactly ONCE with
 
 The implementing-plans skill carries the EVERGREEN CODE RULE and the
 NO BROKEN WINDOWS RULE — follow both. Plan artefacts are scaffolding;
-do not cite them in code. Pre-existing brokenness you encounter
-(failing tests on main, dead code in files you're touching, obvious
-bugs adjacent to your changes) gets fixed in this group's diff per the
-broken-windows blast-radius rules — 'noted as pre-existing and left'
-is not an acceptable report."
+do not cite them in code. For pre-existing issues you encounter
+(failing tests on main, apparent dead code, what looks like a bug):
+verify it's actually broken (reproduce, check call sites, check git
+blame and tests for intent), then **bias toward escalating via
+AskUserQuestion** unless the fix is verified, unambiguous, AND
+localized to a file already in your planned scope. Two failure modes
+both apply: 'noted as pre-existing and left' AND 'looked wrong to me,
+swept it up' without verification. When in doubt, escalate — silent
+uninvited fixes are worse than asking. Every sweep-up you do make
+must appear loudly in the commit message (prefix `sweep:` with
+evidence) and the checkpoint summary's 'Sweep-ups' section."
 ```
 
 ### Step 3: Honour Gates Between review_groups

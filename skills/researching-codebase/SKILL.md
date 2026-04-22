@@ -128,22 +128,37 @@ only are tagged `[INFERRED]`.
 
 Exploration often turns up problems incidental to the research
 question — a failing test in the area, a stale TODO that's now wrong,
-dead code, an obvious bug in a function you're reading. These are not
-distractions; they are part of the deliverable. Capture each in the
-findings doc with a proposed disposition:
+seemingly dead code, an apparent bug in a function you're reading.
+Capture each in the findings doc with a proposed disposition AND the
+evidence behind it. **The planner and implementer cannot re-derive
+your context, so unsupported tags will be treated skeptically (or
+demoted) downstream.**
+
+Disposition options:
 
 - **`[FIX-INLINE]`** — small enough that the implementation phase
-  should sweep it up alongside the planned change.
-- **`[FIX-FOLLOWUP]`** — too large or off-topic to fold in transparently;
-  the plan should add a discrete remediation step so it gets fixed in
-  the same RPI session, not deferred into the void.
-- **`[FLAG-HUMAN]`** — risky, controversial, or ambiguous; needs a
-  human decision before anything is touched.
+  should sweep it up alongside the planned change. Use ONLY when you
+  have direct evidence (reproduced failure, clearly wrong reference,
+  unambiguous correct behavior).
+- **`[FIX-FOLLOWUP]`** — verified broken but too large or off-topic
+  to fold in transparently; the plan should add a discrete remediation
+  step. Same evidence bar as `[FIX-INLINE]`.
+- **`[FLAG-HUMAN]`** — anything else: ambiguity about whether it's
+  actually broken, ambiguity about correct behavior, "smells wrong but
+  I can't verify in scope", load-bearing-looking code that's been that
+  way for a while, or any case where you'd be guessing. **This is the
+  default disposition when in doubt** — it is much cheaper to surface
+  a maybe-broken thing for human triage than to mistag a load-bearing
+  quirk as `[FIX-INLINE]` and have the implementer "fix" it.
 
-"Note as pre-existing and ignore" is not a disposition. The default is
-that broken things found during research get fixed during this session,
-because we have the context now. Surfacing them in research is what
-gives the planner the chance to schedule the sweep-up.
+**Evidence requirement.** Every tagged item must include the evidence
+the researcher actually saw — failing command output (trimmed),
+specific file:line references, the call sites you checked, the git
+blame age, the contradictory tests you looked for. No evidence, no
+`[FIX-*]` tag — downgrade to `[FLAG-HUMAN]`.
+
+"Looks broken to me" is not evidence. Code that surprises you is
+often correct in ways you don't have context for. Tag conservatively.
 
 ### Research External Context (When Needed)
 
@@ -224,8 +239,11 @@ conclusion [OBSERVED].]
 
 [Problems uncovered incidental to the research question. Tag each
 [FIX-INLINE], [FIX-FOLLOWUP], or [FLAG-HUMAN] per the disposition rule
-in Phase 2 §"Surface Broken Windows". Default is FIX-INLINE/FOLLOWUP —
-"note and ignore" is not a valid disposition.]
+in Phase 2 §"Surface Broken Windows". **Default to [FLAG-HUMAN] when
+in doubt** — `[FIX-*]` requires direct evidence (reproduced failure,
+unambiguous correct behavior). Each entry must include the evidence
+behind the tag; unsupported `[FIX-*]` tags will be downgraded by the
+planner.]
 
 ## Open Questions
 

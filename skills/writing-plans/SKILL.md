@@ -129,22 +129,34 @@ Include edge cases and boundary conditions:
 
 #### Handling `[FIX-INLINE]` / `[FIX-FOLLOWUP]` findings from research
 
-If the research document tags pre-existing issues with `[FIX-INLINE]`
-or `[FIX-FOLLOWUP]` (per `researching-codebase` §"Surface Broken
-Windows"), the plan must absorb them — they are not tickets for
-later, they are work for this session.
+Research dispositions are *proposals*, not orders. The planner
+re-evaluates each one before scheduling work, because the implementer
+will act on whatever the plan says — and the cost of a bad sweep-up
+(silent regression in load-bearing code) is higher than the cost of
+asking the user.
 
-- **`[FIX-INLINE]`** items: fold into the nearest planned step that
-  touches the same area. Mention the sweep-up in that step's Action.
-  No separate phase needed.
-- **`[FIX-FOLLOWUP]`** items: add a discrete step (or short phase)
-  alongside the planned work, in the same review_group when the
-  concern matches, otherwise in its own group. Title the step plainly
-  ("Fix unrelated regression in X") so reviewers see it as a
+**Audit rule:** for every `[FIX-INLINE]` or `[FIX-FOLLOWUP]` tag in
+research, check that the entry includes concrete evidence (reproduced
+failure, file:line, call sites checked, contradictory tests ruled
+out). If the evidence is thin, ambiguous, or boils down to "looks
+wrong", **downgrade to `[FLAG-HUMAN]`** and surface during Step 7
+approval rather than silently scheduling autonomous fix work.
+
+After the audit:
+
+- **`[FIX-INLINE]`** items (verified): fold into the nearest planned
+  step that touches the same area. Mention the sweep-up in that step's
+  Action so the implementer knows it is in scope and not a deviation.
+- **`[FIX-FOLLOWUP]`** items (verified): add a discrete step (or short
+  phase) alongside the planned work, in the same review_group when
+  the concern matches, otherwise in its own group. Title the step
+  plainly ("Fix unrelated regression in X") so reviewers see it as a
   deliberate sweep-up, not a stowaway.
-- **`[FLAG-HUMAN]`** items: surface in the plan's "Risks and
-  Mitigations" section and ask the user during Step 7 approval whether
-  to fold them in, route elsewhere, or drop. Do not silently exclude.
+- **`[FLAG-HUMAN]`** items (and downgrades from above): surface in the
+  plan's "Risks and Mitigations" section with the evidence (or lack
+  thereof). Ask the user during Step 7 approval whether to fold each
+  in, route elsewhere, or drop. Do not silently exclude — but also do
+  not silently include.
 
 #### Handling `[INFERRED]` findings from research
 
