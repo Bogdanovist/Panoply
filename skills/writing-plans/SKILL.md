@@ -234,21 +234,39 @@ shapes:
 
 | Shape | When to use | Who owns the review loop |
 | ----- | ----------- | ------------------------ |
-| **Solo** — 1 phase = 1 group | Phase is meaty (estimated implementer context 50–80%) | That phase's implementer |
-| **Batched sequential** — N small phases, 1 group | Each phase trivial; combined estimated context <50% and phases share a concern | A single implementer does all N phases, then invokes the gate once |
+| **Batched sequential** *(default)* — N phases, 1 group | Phases share a concern and combined estimated context stays under budget | A single implementer does all N phases, then invokes the gate once |
+| **Solo** — 1 phase = 1 group | Single meaty phase (estimated implementer context 50–80%), or the only phase in the plan | That phase's implementer |
 | **Fan-out + consolidator** — parallel phases, 1 group | Two+ genuinely independent streams, each comfortably under budget | A consolidator implementer owns the aggregated diff and invokes the gate once |
 
-**Sizing decision rules (apply per group):**
+**Default is Batched sequential.** A plan with multiple phases should produce a single review group unless you can
+justify otherwise. Escalate to multiple groups only when:
 
-- Estimated implementer context <50% **and** phases share a concern → **Batched sequential**
-- Estimated implementer context 50–80% → **Solo**
-- Two+ independent streams, each comfortably under budget → **Fan-out + consolidator**
-- If a single phase alone is already near or above 80% of context budget, it is a sign the phase itself is too large —
-  split the phase before assigning a group.
+- Two+ phases are genuinely parallelisable (→ Fan-out + consolidator, still one group per stream), OR
+- A phase is forced to stand alone because combining it with siblings would push implementer context near 80% (→ Solo
+  for the heavy phase; remaining phases may still batch).
+
+**The "shares a concern" test — operational form.** Ask: *would a human reviewer expect these phases to arrive in the
+same PR?* If yes, they share a concern and belong in one review group. Touching different files, different layers, or
+different subsystems does NOT by itself mean separate concerns — a feature that spans schema + handler + tests is one
+concern, one PR, one group. Only split when a reviewer would genuinely prefer to see the phases separately (e.g., an
+unrelated cleanup bundled for convenience, or a risky migration that wants isolated review before the dependent code
+lands).
+
+**Sizing decision rules (apply in order):**
+
+1. Default to **Batched sequential** with all phases in a single group.
+2. If total estimated implementer context would exceed ~80%, either (a) split the heaviest phase into its own **Solo**
+   group, or (b) if the phase itself is near/above 80% alone, split the *phase* before assigning a group.
+3. If two+ phases are genuinely independent and each comfortably under budget, promote them to **Fan-out +
+   consolidator** — still one review group per independent stream.
 
 **Anti-pattern:** do NOT split groups to "save reviewer compute". Reviewer cost is bounded by diff size, not phase
 count. Splitting a coherent diff across multiple groups costs more review time, not less, because each reviewer run
 re-reads shared context.
+
+**Anti-pattern:** do NOT create one group per phase by reflex. The old "Solo = 1 phase = 1 group" shape is a fallback
+for genuinely large single phases, not the default layout. Per-group cost (implementer spin-up + reviewer gate) is
+real; a 5-phase plan with 5 Solo groups pays that cost 5×.
 
 **When the shape choice is non-obvious** (e.g., two phases that look related but could go Solo+Solo or Batched), note
 the decision and its rationale inline in the Execution block so reviewers of the plan can audit it.
@@ -318,6 +336,12 @@ Use this structure:
 ## Summary
 
 [One paragraph describing what will be implemented]
+
+**Estimated agent cost:** `<N>` implementer(s) + `<M>` code-reviewer run(s) + 1 security-reviewer run
+*(N = number of implementers spawned across all groups; M = number of review groups excluding the terminal
+security-gate. Count the shapes: Batched sequential = 1 implementer + 1 reviewer; Fan-out + consolidator = K
+stream implementers + 1 consolidator + 1 reviewer; Solo = 1 + 1. If this number feels high for the scope, reread
+§4a — you probably over-split into Solo groups.)*
 
 ## Stakes Classification
 
@@ -486,4 +510,6 @@ Before requesting approval:
 - [ ] Every phase's Execution block includes a `review_group: <id>` field
 - [ ] Plan ends with a terminal `security-gate` phase (`depends_on: [all prior groups]`, `review_group: security`, `security_review` mode set)
 - [ ] For each group, the Solo / Batched-sequential / Fan-out+consolidator shape choice is recorded inline when non-obvious
+- [ ] Summary includes an **Estimated agent cost** line (implementers + code-reviewer runs + 1 security run)
+- [ ] Batched sequential is the default — if the plan has multiple review groups, the reason is justified inline (genuinely parallel streams, or a phase forced into Solo by context budget)
 - [ ] Post-Merge Verification section filled in (either `Required: no`, or `Required: yes` with trigger point, commands, and owner)
