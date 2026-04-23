@@ -44,26 +44,33 @@ Report: "Detected [framework] via [indicator]"
 
 ### Step 2: Run Tests
 
-Execute tests with appropriate flags for detailed output:
+Execute tests with appropriate flags for detailed output, and **tee the full output
+to a log file** so the calling agent can drill in later without you having to
+echo every line back through your response:
 
 ```bash
+LOG="${TMPDIR:-/tmp}/test-runner-$(date +%Y%m%d-%H%M%S)-$$.log"
+
 # JavaScript/TypeScript
-npm test -- --verbose 2>&1
+npm test -- --verbose 2>&1 | tee "$LOG"
 
 # Rust
-cargo test --no-fail-fast 2>&1
+cargo test --no-fail-fast 2>&1 | tee "$LOG"
 
 # Python
-pytest -v 2>&1
+pytest -v 2>&1 | tee "$LOG"
 
 # Ruby
-bundle exec rspec --format documentation 2>&1
+bundle exec rspec --format documentation 2>&1 | tee "$LOG"
 
 # Go
-go test -v ./... 2>&1
+go test -v ./... 2>&1 | tee "$LOG"
 ```
 
 Capture both stdout and stderr. Set reasonable timeout (5 minutes default).
+
+**Remember the log path** — you will surface it in the final report so the main
+agent can `Read` it on demand if a summary isn't enough.
 
 ### Step 3: Parse Results
 
@@ -116,6 +123,7 @@ Produce structured report:
 - **Failed**: [N]
 - **Skipped**: [N]
 - **Duration**: [time]
+- **Full log**: [/path/to/log/file]
 
 ### Failures (if any)
 
@@ -130,12 +138,12 @@ Produce structured report:
 ```text
 [failure message and stack trace]
 ```
-
-### Raw Output (truncated)
-
-```text
-[first/last N lines of output if helpful]
 ```
+
+**Do not paste the full raw output into the report.** It lives in the log file
+for a reason — the whole point of this agent is to keep that noise out of the
+calling agent's context. Include only the failing test names and their specific
+error messages / stack traces. If the caller needs more, they can `Read` the log.
 
 ## Output Format
 
@@ -145,6 +153,8 @@ The report must clearly communicate:
 2. **Counts** - Quick scan of pass/fail numbers
 3. **Failure details** - Actionable information to fix failures
 4. **Context** - Framework and duration for debugging
+5. **Log path** - Always include the `$TMPDIR/test-runner-*.log` path so the
+   caller can drill deeper on demand without another test run
 
 ## Edge Cases
 
