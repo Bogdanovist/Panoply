@@ -58,5 +58,6 @@
   "effortLevel": "high",
   "skipDangerousModePermissionPrompt": true,
   "showTurnDuration": true,
-  "teammateMode": "tmux"
+  "teammateMode": "tmux",
+  "model": "haiku"
 }
