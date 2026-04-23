@@ -55,9 +55,8 @@
     "github@claude-plugins-official": true
   },
   "alwaysThinkingEnabled": true,
-  "effortLevel": "high",
+  "effortLevel": "xhigh",
   "skipDangerousModePermissionPrompt": true,
   "showTurnDuration": true,
-  "teammateMode": "tmux",
-  "model": "haiku"
+  "teammateMode": "tmux"
 }
