@@ -58,5 +58,6 @@
   "effortLevel": "xhigh",
   "skipDangerousModePermissionPrompt": true,
   "showTurnDuration": true,
-  "teammateMode": "tmux"
+  "teammateMode": "tmux",
+  "agentPushNotifEnabled": true
 }
