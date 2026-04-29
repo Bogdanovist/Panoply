@@ -45,6 +45,13 @@ Look for plan at: `docs/plans/YYYY-MM-DD-<topic>-plan.md`
 
 ### 3. Offer Worktree Isolation
 
+> **Skip this step entirely when invoked from the RPI orchestrator.** RPI runs
+> implementers in the orchestrator's CWD on a single feature branch (set up by
+> Phase 0 preflight) and does not use `isolation: "worktree"`. The
+> branch-per-implementer worktree pattern caused base_ref drift and orphaned
+> worktrees and has been removed from the RPI flow. The rest of this section
+> applies only to direct human invocations of `implementing-plans`.
+
 Before making changes, offer to create an isolated worktree.
 
 **First, check if already in a worktree:**
@@ -234,7 +241,28 @@ When all steps are done:
    tracks diff size, not phase count, so one review over the aggregated
    diff is both cheaper and more accurate than N per-phase reviews.
 
-6. Summarize results
+6. **Update the plan's `## Implementation State` section** *(when the plan has
+   one — i.e. RPI-driven runs)*. Edit the entry for this group's `<group-id>`
+   so the Phase 3 state survives a context clear:
+
+   - On gate PASS (exit 0): set status to `complete` and append the head
+     commit SHA at the time of completion, e.g.
+
+     ```markdown
+     - `phase-1-schema`: complete (commit `abc1234`)
+     ```
+
+   - On cap-hit (exit 42): set status to `cap-hit`, e.g.
+
+     ```markdown
+     - `phase-1-schema`: cap-hit (sentinel `.review-verdict-phase-1-schema`)
+     ```
+
+   The orchestrator reads this section on resume to determine which group to
+   run next. If the plan has no `## Implementation State` section, this step
+   is a no-op (direct human invocation, not an RPI run).
+
+7. Summarize results
 
 ```text
 Implementation complete for '$ARGUMENTS'.

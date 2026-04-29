@@ -491,12 +491,32 @@ repo CI]
 
 [How to undo changes if needed]
 
+## Implementation State
+
+<!-- Machine-managed: written by the RPI orchestrator at Phase 3 start and
+     updated by each group's implementer. Do not edit by hand. Persists the
+     state needed to resume Phase 3 after a context clear. -->
+
+- **branch**: `<feat/...>` *(set by Phase 0 preflight)*
+- **base_ref**: `<sha>` *(orchestrator HEAD captured at Phase 3 start)*
+- **groups** *(one entry per `review_group`, in plan order, plus `security`
+  for the terminal phase; status is one of `pending` / `in-progress` /
+  `complete` / `cap-hit`)*:
+  - `<group-id>`: pending
+  - `<group-id-2>`: pending
+  - `security`: pending
+
 ## Status
 
 - [ ] Plan approved
 - [ ] Implementation started
 - [ ] Implementation complete
 ```
+
+> **`parallel-with` is documentation only.** RPI executes review_groups
+> sequentially regardless of `parallel-with` annotations. Plans can declare
+> parallelism for human readers' mental model, but the orchestrator does
+> not spawn implementers concurrently.
 
 ### 7. Request Approval
 
@@ -544,3 +564,4 @@ Before requesting approval:
 - [ ] Summary includes an **Estimated agent cost** line (implementers + code-reviewer runs + 1 security run)
 - [ ] Batched sequential is the default — if the plan has multiple review groups, the reason is justified inline (genuinely parallel streams, or a phase forced into Solo by context budget)
 - [ ] Post-Merge Verification section filled in (either `Required: no`, or `Required: yes` with trigger point, commands, and owner)
+- [ ] `## Implementation State` section is present with one entry per `review_group` (plus `security` for the terminal phase), each marked `pending`; `branch` and `base_ref` left as placeholders for the orchestrator to fill in
