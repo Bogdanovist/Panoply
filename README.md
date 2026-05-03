@@ -36,7 +36,8 @@ git clone https://github.com/haberlah/dotfiles-claude.git ~/dotfiles-claude
 ```
 
 The setup script:
-- Symlinks `CLAUDE.md`, `settings.json`, `hooks/`, `skills/`, and `agents/` into `~/.claude/`
+- Symlinks `CLAUDE.md`, `settings.json`, `hooks/`, and `agents/` into `~/.claude/`
+- Populates `~/.claude/skills/` from the active skill **bundle** (see [Skill bundles](#skill-bundles))
 - Copies `settings.local.example.json` to `settings.local.json` (your machine-specific permissions — gitignored, never pushed)
 - Installs a pre-commit hook that blocks secrets
 - Backs up any existing config before overwriting
@@ -72,8 +73,15 @@ dotfiles-claude/
 ├── hooks/
 │   ├── auto-commit-push.sh         # Stop hook: auto-commit + push
 │   └── pre-commit-secrets-check.sh # Git hook: blocks secrets from commits
-├── skills/                         # 27 local skills
+├── skill-bundles/                  # Swappable skill sets (see Skill bundles)
+│   ├── ACTIVE                      # one-line file: name of default bundle
+│   ├── core/                       # always-on infra skills (21)
+│   ├── rpi/                        # research-plan-implement methodology (6)
+│   └── agentivestack/              # DDD-style methodology, fork-by-copy (7)
 ├── agents/                         # 7 local agents
+├── scripts/
+│   ├── panoply-skills              # bundle switcher
+│   └── claude-skills               # per-session bundle override wrapper
 ├── setup.sh                        # One-command installer
 └── LICENSE                         # MIT
 ```
@@ -135,11 +143,40 @@ This means installing a skill, tweaking a setting, or adding a hook is automatic
 
 **Deny rules** in permissions prevent Claude from reading `.env` files, SSH keys, and cloud credentials during sessions.
 
+## Skill bundles
+
+Skills are organised into **bundles** so you can swap between competing methodologies (e.g. RPI vs Agentive/DDD) without contaminating each other. `~/.claude/skills/` is populated from `core/` + one methodology bundle. Only one methodology is active at a time.
+
+```
+skill-bundles/
+├── ACTIVE              ← one-line file holding the default bundle name (rpi)
+├── core/               always-on infra; survives every swap
+├── rpi/                research-plan-implement methodology
+└── agentivestack/      DDD/spec/slice methodology (fork-by-copy)
+```
+
+**Default (set once)** — edit `skill-bundles/ACTIVE` (or run `scripts/panoply-skills use <bundle>`). Every new Claude session picks up that bundle silently. The choice is version-controlled, so it's reproducible across machines.
+
+**Per-session override (occasional)** — launch with `scripts/claude-skills <bundle>`. This re-links symlinks, runs `claude`, and restores the default on exit. `ACTIVE` is never touched.
+
+```bash
+scripts/panoply-skills which               # show active bundle
+scripts/panoply-skills list                # list available bundles
+scripts/panoply-skills use agentivestack   # change default
+scripts/claude-skills agentivestack        # one-shot override (default restored on exit)
+```
+
+> **Caveat — parallel sessions share `~/.claude/skills/`.** Two top-level `claude` invocations in different terminals can't run on different bundles at once: the one started later overwrites the symlink farm for both. Fine for serial overrides, not safe for parallel sessions on different methodologies. Sub-agents spawned within a single session inherit that session's bundle, so agent teams stay consistent.
+
+### Adding a new bundle
+
+Create a new directory under `skill-bundles/<name>/`, drop skill subdirectories with `SKILL.md` files in each, then `scripts/panoply-skills use <name>`. The switcher refuses to link if any skill name collides with `core/`.
+
 ## Skills
 
-27 local skills + 9 via plugin (36 total):
+27 local skills + 9 via plugin (36 total). Active set depends on the chosen bundle.
 
-### Local skills (in `skills/`)
+### Core bundle — always linked (21)
 
 | Skill | Purpose |
 |---|---|
@@ -150,26 +187,45 @@ This means installing a skill, tweaking a setting, or adding a hook is automatic
 | `end-session` | CI checks + push + PR on session exit |
 | `finishing-work` | Structured completion workflow for implementations |
 | `git-worktrees` | Isolated worktree setup for parallel development |
-| `implementing-plans` | Execute an approved plan with checkpoint verification |
 | `organise-repo` | Audit/set up a repo's `.claude/` configuration |
 | `parallel-agents` | Concurrent agent dispatch for independent problems |
 | `pdf` | Extract, merge, split, fill PDF forms |
 | `pr-preflight` | Local mirror of the GitHub Claude review bot — runs the five-axis review prompt against the current branch and prints a PASS/WARN/BLOCK verdict to stdout |
 | `react-best-practices` | Vercel's React/Next.js performance patterns |
 | `receiving-code-review` | Verification-first response to review feedback |
-| `research-plan-implement` | End-to-end RPI pipeline via parallel subagents |
-| `researching-codebase` | Thorough codebase exploration through dialogue |
 | `retro` | Retrospective on code quality, context, and conventions |
 | `reviewing-code` | Code review methodology with Conventional Comments |
 | `security-review` | Security review methodology for implementation changes |
 | `skill-creator` | Create new Claude Code skills |
-| `synthesizing-research` | Consolidate multiple research docs into a unified report |
 | `system-feedback` | Feedback loop on the Panoply config system itself |
 | `systematic-debugging` | Root-cause investigation for failures and bugs |
-| `test-driven-development` | Rigorous RED-GREEN-REFACTOR discipline |
 | `verification-before-completion` | Evidence-before-claims for implementation completion |
-| `writing-plans` | Transform research into actionable implementation plans |
 | `xlsx` | Create/analyse spreadsheets |
+
+### `rpi` bundle — research-plan-implement methodology (6)
+
+| Skill | Purpose |
+|---|---|
+| `implementing-plans` | Execute an approved plan with checkpoint verification |
+| `research-plan-implement` | End-to-end RPI pipeline via parallel subagents |
+| `researching-codebase` | Thorough codebase exploration through dialogue |
+| `synthesizing-research` | Consolidate multiple research docs into a unified report |
+| `test-driven-development` | Rigorous RED-GREEN-REFACTOR discipline |
+| `writing-plans` | Transform research into actionable implementation plans |
+
+### `agentivestack` bundle — DDD/spec/slice methodology (7)
+
+Forked from [AgentiveStack/skills](https://github.com/AgentiveStack/skills) at commit `69375219`. Copy-not-submodule — upstream changes don't auto-flow. See `skill-bundles/agentivestack/ORIGIN.md` for the rename map and rationale.
+
+| Skill (slash command) | Purpose |
+|---|---|
+| `writing-specs` | Interview-driven feature spec grounded in domain language |
+| `domain-modelling` | Stress-test a plan against the domain model |
+| `slicing-features` | Break a spec into vertical tracer-bullet slices |
+| `tracer-tdd` | Implement a slice with pragmatic, slice-flavoured TDD |
+| `mapping-system` | Zoom out — map code into bounded contexts and data flow |
+| `architecting` | Surface architectural friction; design deep module interfaces |
+| `filing-bugs` | Conversational QA → durable GitHub issues in domain language |
 
 ### Local agents (in `agents/`)
 
@@ -204,7 +260,7 @@ Skills are available immediately in your next Claude Code session.
 | `dbt-skills` | creating-dbt-models, debugging-dbt-errors, testing-dbt-models, documenting-dbt-models, migrating-sql-to-dbt, refactoring-dbt-models |
 | `snowflake-skills` | finding-expensive-queries, optimizing-query-by-id, optimizing-query-text |
 
-All skills are automatically available in Claude Code sessions. To invoke a skill, use `/<skill-name>` (e.g., `/pdf`, `/xlsx`). To remove a local skill, delete its directory from `skills/`. Plugin skills are managed via `claude plugin list` / `claude plugin uninstall`.
+All skills are automatically available in Claude Code sessions. To invoke a skill, use `/<skill-name>` (e.g., `/pdf`, `/xlsx`). To remove a local skill, delete its directory from the relevant bundle under `skill-bundles/`. Plugin skills are managed via `claude plugin list` / `claude plugin uninstall`.
 
 ## Per-Repo Convention Overrides
 
@@ -241,7 +297,8 @@ See [Claude Code memory docs](https://code.claude.com/docs/en/memory) for how ru
 | `CLAUDE.md` | Language preference, workflow conventions |
 | `settings.local.json` | Your MCP server permissions, Bash permission level (gitignored — edit locally) |
 | `settings.json` | Token limits, auto-commit behaviour, MCP timeouts |
-| `skills/` | Remove skills you don't use, add your own |
+| `skill-bundles/ACTIVE` | Default skill bundle (`rpi`, `agentivestack`, or your own) |
+| `skill-bundles/<bundle>/` | Add/remove skills within a bundle, or create new bundles |
 
 Shared settings (`settings.json`, `CLAUDE.md`, hooks, skills) sync via git. Machine-specific permissions (`settings.local.json`) stay local.
 

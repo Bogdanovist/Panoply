@@ -23,11 +23,18 @@ Before implementing any non-trivial task:
 2. Present the plan for my review
 3. Only proceed with implementation after I approve
 
-**RPI is the happy path for non-trivial work.** If a task shows any of these signals — touches multiple files,
-spans unfamiliar code, has ambiguous requirements, or is feature-shaped rather than one-liner-shaped — suggest
-`/research-plan-implement` upfront. It runs research, planning, and implementation as separate gated phases
-(each in its own context window), so you stay in control at every handoff. Defaulting to RPI beats realising
-mid-implementation that we needed research first.
+**RPI is the happy path for non-trivial work** — *when the `rpi` bundle is active*. If a task shows any of these
+signals — touches multiple files, spans unfamiliar code, has ambiguous requirements, or is feature-shaped rather
+than one-liner-shaped — suggest `/research-plan-implement` upfront. It runs research, planning, and implementation
+as separate gated phases (each in its own context window), so you stay in control at every handoff. Defaulting
+to RPI beats realising mid-implementation that we needed research first.
+
+**Skill bundles.** The active methodology bundle is determined by `~/src/Panoply/skill-bundles/ACTIVE`. The two
+bundles currently shipped are `rpi` (research-plan-implement) and `agentivestack` (DDD/spec/slice). Only the
+methodology skills swap; cross-cutting infra skills (review, security-review, debugging, verification, ADRs,
+PR preflight, etc.) live in `core/` and are always available. If `rpi` skills are missing in a session, you're
+on a different bundle — propose using whatever methodology IS available instead of `/research-plan-implement`.
+Bundle membership is documented in `README.md` under "Skill bundles".
 
 Use Plan Mode (Shift+Tab) for multi-step tasks. Always think through the full approach before writing code.
 
@@ -71,7 +78,7 @@ plan's "branch strategy" and "sub-PR" prescriptions as no-ops. The per-group rev
 security-gate still add value and should run; the branch/PR scaffolding does not.
 
 Signal that you're in this mode: the working directory is `~/src/Panoply/` and the change touches
-`skills/`, `hooks/`, `scripts/`, `agents/`, `settings.json`, `CLAUDE.md`, or the root of this repo.
+`skill-bundles/`, `hooks/`, `scripts/`, `agents/`, `settings.json`, `CLAUDE.md`, or the root of this repo.
 
 ## Data Science Projects
 

@@ -1,0 +1,153 @@
+#!/usr/bin/env bash
+# Manage which skill bundle is active.
+#
+# Usage:
+#   panoply-skills which            Show the active bundle.
+#   panoply-skills list             List available bundles.
+#   panoply-skills use <bundle>     Set the global default and rebuild ~/.claude/skills/.
+#   panoply-skills relink           Rebuild ~/.claude/skills/ from current ACTIVE.
+#                                   (Used by setup.sh and claude-skills wrapper.)
+#   panoply-skills relink <bundle>  Rebuild ~/.claude/skills/ for <bundle> WITHOUT
+#                                   touching ACTIVE. (Used by claude-skills wrapper.)
+#
+# Layout:
+#   $REPO/skill-bundles/
+#     ACTIVE              one-line text file holding the active bundle name
+#     core/               always-on infra skills
+#     <bundle>/           methodology skill set (rpi, agentivestack, …)
+#
+# Population rules:
+#   ~/.claude/skills/ is a real directory of per-skill symlinks. The switcher
+#   removes any symlink already there, then re-links every skill in core/
+#   plus every skill in the chosen bundle. Refuses on duplicate skill names.
+
+set -euo pipefail
+
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+BUNDLES_DIR="$REPO_DIR/skill-bundles"
+ACTIVE_FILE="$BUNDLES_DIR/ACTIVE"
+TARGET_DIR="$HOME/.claude/skills"
+
+err()  { printf '\033[31merror:\033[0m %s\n' "$*" >&2; exit 1; }
+info() { printf '%s\n' "$*"; }
+
+read_active() {
+  [[ -f "$ACTIVE_FILE" ]] || err "no $ACTIVE_FILE; run \`panoply-skills use <bundle>\`"
+  local v
+  v="$(tr -d '[:space:]' < "$ACTIVE_FILE")"
+  [[ -n "$v" ]] || err "$ACTIVE_FILE is empty"
+  printf '%s' "$v"
+}
+
+list_bundles() {
+  for d in "$BUNDLES_DIR"/*/; do
+    local name
+    name="$(basename "$d")"
+    [[ "$name" == "core" ]] && continue
+    [[ "$name" == "docs" ]] && continue
+    echo "$name"
+  done
+}
+
+bundle_dir() {
+  local name="$1"
+  local d="$BUNDLES_DIR/$name"
+  [[ -d "$d" ]] || err "bundle '$name' not found at $d"
+  printf '%s' "$d"
+}
+
+# List skill subdirs of a bundle (one per line; basenames only).
+skills_in() {
+  local d="$1"
+  local s
+  for s in "$d"/*/; do
+    [[ -d "$s" ]] || continue
+    local n
+    n="$(basename "$s")"
+    [[ -f "$s/SKILL.md" ]] || { echo "WARN: $n in $(basename "$d") has no SKILL.md, skipping" >&2; continue; }
+    echo "$n"
+  done
+}
+
+clear_target_symlinks() {
+  # Convert legacy single-symlink layout (~/.claude/skills -> $REPO/skills),
+  # which may now be a broken link if the old target is gone.
+  if [[ -L "$TARGET_DIR" ]]; then
+    rm "$TARGET_DIR"
+  fi
+  mkdir -p "$TARGET_DIR"
+  # Remove only the symlinks we manage; leave any real files alone.
+  local entry
+  for entry in "$TARGET_DIR"/*; do
+    [[ -e "$entry" || -L "$entry" ]] || continue   # empty-glob guard
+    if [[ -L "$entry" ]]; then rm "$entry"; fi
+  done
+}
+
+relink() {
+  local bundle="$1"
+  local core_dir="$BUNDLES_DIR/core"
+  local bundle_path
+  bundle_path="$(bundle_dir "$bundle")"
+
+  local core_list bundle_list
+  core_list="$(skills_in "$core_dir")"
+  bundle_list="$(skills_in "$bundle_path")"
+
+  # Collision check: any name in both lists is a hard error.
+  local collisions
+  collisions="$(printf '%s\n%s\n' "$core_list" "$bundle_list" | sort | uniq -d)"
+  if [[ -n "$collisions" ]]; then
+    printf 'collision: refusing to link — same skill name in core/ and %s/:\n' "$bundle" >&2
+    printf '  - %s\n' $collisions >&2
+    exit 2
+  fi
+
+  clear_target_symlinks
+
+  local n core_n=0 bundle_n=0
+  while IFS= read -r n; do
+    [[ -z "$n" ]] && continue
+    ln -s "$core_dir/$n" "$TARGET_DIR/$n"
+    core_n=$((core_n + 1))
+  done <<< "$core_list"
+  while IFS= read -r n; do
+    [[ -z "$n" ]] && continue
+    ln -s "$bundle_path/$n" "$TARGET_DIR/$n"
+    bundle_n=$((bundle_n + 1))
+  done <<< "$bundle_list"
+
+  info "active: $bundle  →  $TARGET_DIR"
+  info "  core skills:    $core_n"
+  info "  $bundle skills: $bundle_n"
+}
+
+cmd="${1:-}"; shift || true
+case "$cmd" in
+  which)
+    read_active
+    echo
+    ;;
+  list)
+    list_bundles
+    ;;
+  use)
+    [[ $# -ge 1 ]] || err "usage: panoply-skills use <bundle>"
+    target="$1"
+    bundle_dir "$target" >/dev/null
+    relink "$target"
+    printf '%s\n' "$target" > "$ACTIVE_FILE"
+    info "default updated: $ACTIVE_FILE → $target"
+    ;;
+  relink)
+    target="${1:-$(read_active)}"
+    bundle_dir "$target" >/dev/null
+    relink "$target"
+    ;;
+  ""|-h|--help|help)
+    sed -n '2,/^set -euo/p' "$0" | sed -n '/^#/p' | sed 's/^# \?//'
+    ;;
+  *)
+    err "unknown command: $cmd  (try: which, list, use, relink)"
+    ;;
+esac

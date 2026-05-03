@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Per-session skill-bundle override.
+#
+# Usage:
+#   claude-skills <bundle> [claude args...]
+#
+# Re-links ~/.claude/skills/ for the requested bundle, launches `claude`,
+# then restores the previous default on exit. ACTIVE is left untouched.
+#
+# CAVEAT: ~/.claude/skills/ is global. If a second Claude session starts in
+# another terminal while this one is running, that session will see the
+# overridden bundle too — they share the same symlink farm. Fine for serial
+# overrides; not safe for parallel sessions on different bundles.
+
+set -euo pipefail
+
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SWITCHER="$REPO_DIR/scripts/panoply-skills"
+ACTIVE_FILE="$REPO_DIR/skill-bundles/ACTIVE"
+
+err() { printf '\033[31merror:\033[0m %s\n' "$*" >&2; exit 1; }
+
+[[ $# -ge 1 ]] || err "usage: claude-skills <bundle> [claude args...]"
+override="$1"; shift
+
+[[ -x "$SWITCHER" ]] || err "switcher not found or not executable: $SWITCHER"
+[[ -f "$ACTIVE_FILE" ]] || err "no $ACTIVE_FILE; run \`panoply-skills use <bundle>\` first"
+
+previous="$(tr -d '[:space:]' < "$ACTIVE_FILE")"
+[[ -n "$previous" ]] || err "$ACTIVE_FILE is empty"
+
+restore() {
+  # Re-link the previous default WITHOUT updating ACTIVE (which we never touched).
+  "$SWITCHER" relink "$previous" >/dev/null 2>&1 || true
+}
+trap restore EXIT INT TERM
+
+# Re-link to the override bundle without changing ACTIVE.
+"$SWITCHER" relink "$override"
+
+printf '\033[33m[claude-skills]\033[0m session bundle: %s  (default %s will be restored on exit)\n' "$override" "$previous" >&2
+
+exec claude "$@"

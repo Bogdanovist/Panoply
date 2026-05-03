@@ -12,8 +12,10 @@ echo "Setting up Claude Code config from $REPO_DIR..."
 # Create ~/.claude if it doesn't exist
 mkdir -p "$CLAUDE_DIR"
 
-# Files/dirs to symlink (shared config, tracked in git)
-SYMLINK_ITEMS=(CLAUDE.md settings.json hooks skills agents)
+# Files/dirs to symlink (shared config, tracked in git).
+# `skills/` is handled separately via the bundle switcher — it's not a single
+# symlink but a populated directory of per-skill links.
+SYMLINK_ITEMS=(CLAUDE.md settings.json hooks agents)
 
 for item in "${SYMLINK_ITEMS[@]}"; do
   target="$CLAUDE_DIR/$item"
@@ -31,6 +33,16 @@ for item in "${SYMLINK_ITEMS[@]}"; do
   ln -s "$source" "$target"
   echo "  Linked $target -> $source"
 done
+
+# Skills are managed by skill-bundles/ + scripts/panoply-skills.
+# Default bundle lives in skill-bundles/ACTIVE (version-controlled).
+# Initialise it on first setup if absent.
+if [ ! -f "$REPO_DIR/skill-bundles/ACTIVE" ]; then
+  echo "rpi" > "$REPO_DIR/skill-bundles/ACTIVE"
+  echo "  Initialised skill-bundles/ACTIVE -> rpi"
+fi
+chmod +x "$REPO_DIR/scripts/panoply-skills" "$REPO_DIR/scripts/claude-skills"
+"$REPO_DIR/scripts/panoply-skills" relink
 
 # settings.local.json is machine-specific (permissions, MCP tools).
 # Copy from template if no local file exists; never overwrite existing.
