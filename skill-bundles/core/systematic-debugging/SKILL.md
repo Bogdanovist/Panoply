@@ -1,263 +1,312 @@
 ---
 name: systematic-debugging
 description: >
-  Root cause investigation methodology for bugs and failures. Use when
-  encountering test failures, unexpected behavior, or errors during research
-  or implement phases. Find the cause before attempting fixes.
+  Disciplined diagnosis loop for data-pipeline bugs: bad rows, broken queries,
+  dropped data, dbt test failures, Temporal workflow crashes, perf regressions.
+  Pin the data, build a deterministic check, hypothesise before instrumenting.
+  Use when something is broken, throwing, returning the wrong number, or running
+  much slower than it used to.
 ---
 
 # Systematic Debugging
 
-Find the root cause before attempting fixes. Symptom fixes are failure.
+A discipline for data-pipeline bugs. Skip phases only when explicitly justified.
+
+The stack assumed throughout: **BigQuery** (warehouse), **dbt** (transforms),
+**Temporal** (orchestration), **BigTable** (raw event source), **pandas** (in-Python
+shaping), **pytest** (code tests), **dbt singular tests** (data assertions),
+**Streamlit** (dashboards), **Hex** (ad-hoc analysis). Adapt the *tools* to your
+context, but the *phases* don't change.
+
+## Phase 1 — Pin the data, then build a deterministic check
+
+**THIS IS THE SKILL.** Everything else is mechanical. If you can ask "did the
+bug show up?" in under five seconds, against data that doesn't move, you will
+find the cause. If you can't, no amount of staring at SQL will save you.
+
+Live data drifts. A bug you chase against `prod` or even `*-debug` BigQuery
+datasets will be a different bug tomorrow. **Detach from live sources first.**
 
-## Purpose
-
-Debugging without methodology wastes time and creates new bugs. Random fixes address symptoms, not causes. This skill
-enforces systematic investigation to find root causes before any fix is attempted.
-
-## The Iron Law
-
-**ALWAYS find root cause before attempting fixes.**
-
-Quick patches mask underlying issues. If you're trying fixes without understanding why they might work, you're
-guessing - stop and investigate.
-
-## The Four Phases
-
-Complete each phase in order. Do not skip to implementation.
-
-### Phase 1: Root Cause Investigation
-
-**Understand what's happening before theorizing why.**
-
-1. **Read the error carefully**
-   - Full error message, not just the first line
-   - Stack trace - where did it originate?
-   - Error codes or types
-
-2. **Reproduce consistently**
-   - Can you trigger the failure reliably?
-   - What are the exact steps?
-   - Does it fail the same way every time?
-
-3. **Review recent changes**
-   - What changed since it last worked?
-   - Check git log for recent commits
-   - Any new dependencies or configuration?
-
-4. **Gather diagnostic evidence**
-   - Add logging at key points
-   - Check system state (memory, disk, network)
-   - Inspect input data
-
-5. **Trace backwards**
-   - Start from the error
-   - Work backwards through the call stack
-   - Find where correct behavior diverges
-
-### Phase 2: Pattern Analysis
-
-**Compare against working code.**
-
-1. **Find similar working code**
-   - How does a working version do this?
-   - What's different about this case?
-
-2. **Compare against references**
-   - Documentation examples
-   - Library/framework conventions
-   - Previous implementations
-
-3. **Identify the difference**
-   - What's unique about the failing case?
-   - What assumption is being violated?
-
-4. **Understand dependencies**
-   - What does this code depend on?
-   - Could a dependency have changed?
-   - Are versions correct?
-
-### Phase 3: Hypothesis and Testing
-
-**Scientific method for debugging.**
-
-1. **Form a single hypothesis**
-   - "The error occurs because X"
-   - Be specific and testable
-   - Only one hypothesis at a time
-
-2. **Design a test**
-   - How would you prove/disprove this hypothesis?
-   - What would you expect to see if correct?
-   - What would you expect to see if wrong?
-
-3. **Make minimal changes**
-   - Change ONE thing to test the hypothesis
-   - Don't bundle multiple changes
-   - Keep changes reversible
-
-4. **Observe results**
-   - Did the change affect the behavior?
-   - Does it match your prediction?
-   - Record what happened
-
-5. **Iterate or proceed**
-   - Hypothesis confirmed: proceed to Phase 4
-   - Hypothesis rejected: form new hypothesis, repeat Phase 3
-
-### Phase 4: Implementation
-
-**Fix only after understanding.**
-
-1. **Write a failing test**
-   - Capture the bug in a test
-   - Test should fail before fix
-   - Test should pass after fix
-
-2. **Implement single fix**
-   - Address the root cause
-   - Not symptoms or side effects
-   - Minimal change required
-
-3. **Verify the fix**
-   - Original test passes
-   - All other tests pass
-   - Manual verification if applicable
-
-4. **Check for related issues — verify each, then fix or escalate**
-   - Could this bug exist elsewhere?
-   - Search for similar patterns
-   - For each candidate instance: **verify it's actually broken in the
-     same way** (reproduce or trace the failure path; check that
-     callers and tests don't depend on the surprising behavior). A
-     pattern that *looks* like the same bug may be intentional or
-     test-pinned in its own context.
-   - Fix the instances where you can establish all of: (a) verified
-     broken by the same root cause, (b) correct behavior is
-     unambiguous, (c) fix is localized. Otherwise **escalate via
-     AskUserQuestion** with the list of suspected sites and what you
-     could and couldn't verify.
-   - Report fixed instances prominently in your output (commit message
-     bullet, summary section) — do not bury sweep-ups inside step
-     verification text. Both "found and left as pre-existing" AND
-     "swept up without verification" are failure modes.
-
-## Red Flags: You're Skipping Investigation
-
-| Thought | Reality |
-|---------|---------|
-| "Let me try this quick fix" | You don't understand the cause |
-| "I'll just restart the service" | Masking the symptom |
-| "Maybe if I add a null check here" | Guessing, not debugging |
-| "Let me try a few things" | Random changes waste time |
-| "This usually fixes it" | Past fixes don't explain current bugs |
-| "I don't have time to investigate" | You don't have time NOT to |
-
-## Integration with RPI Workflow
-
-### During Research Phase
-
-When investigating an issue:
-
-1. Use this skill to understand the problem
-2. Document root cause in research findings
-3. Root cause informs the implementation plan
-
-### During Implement Phase
-
-When a step fails verification:
-
-1. Stop the step (do not proceed)
-2. Apply this debugging methodology
-3. Find root cause before attempting fixes
-4. Update plan if fix requires changes
-5. Resume implementation after fix verified
-
-## Escalation: When to Question Architecture
-
-If you've attempted three or more fixes and the problem persists:
-
-**Stop fixing. Question the architecture.**
-
-- Is the design fundamentally flawed?
-- Are we fighting the framework?
-- Should this be reimplemented differently?
-
-Use AskUserQuestion to discuss architectural concerns before continuing.
-
-## Evidence Gathering Techniques
-
-### Logging
-
-```text
-Add temporary logging:
-- Entry/exit of functions
-- Variable values at key points
-- Timestamps for timing issues
-- Request/response payloads
-```
-
-### Bisection
-
-```text
-When did it break?
-- git bisect to find breaking commit
-- Binary search through code changes
-- Narrow down to specific change
-```
-
-### Isolation
-
-```text
-Simplify to reproduce:
-- Remove unrelated code
-- Use minimal test case
-- Eliminate variables
-```
-
-### Comparison
-
-```text
-What's different?
-- Working vs broken environment
-- Working vs broken input
-- Working vs broken configuration
-```
-
-## Anti-Patterns
-
-### Shotgun Debugging
-
-**Wrong**: Try random changes hoping one works
-**Right**: Form hypothesis, test it, iterate
-
-### Fix and Pray
-
-**Wrong**: Apply fix, hope it works, move on
-**Right**: Verify fix addresses root cause
-
-### Debugging by Deletion
-
-**Wrong**: Remove code until error goes away
-**Right**: Understand why code causes error
-
-### Copy-Paste Fixes
-
-**Wrong**: Find similar fix online, apply blindly
-**Right**: Understand why the fix works for your case
-
-### Skipping to Phase 4
-
-**Wrong**: "I think I know the fix, let me just try it"
-**Right**: Complete investigation phases first
-
-## Checklist Before Fixing
-
-- [ ] Error message read completely
-- [ ] Failure reproduced consistently
-- [ ] Recent changes reviewed
-- [ ] Diagnostic evidence gathered
-- [ ] Root cause identified (not just symptoms)
-- [ ] Hypothesis formed and tested
-- [ ] Fix addresses root cause
-- [ ] Failing test written before fix
+### Pin the data
+
+In rough order of preference:
+
+1. **`bq query --destination_table` into a personal scratch dataset** with the
+   minimal slice that reproduces. One day, one experiment arm, one
+   `account_id` — whatever isolates it.
+2. **`bq extract` to GCS, then `gsutil cp` to a local Parquet/CSV** under
+   `tests/fixtures/` or `~/scratch/`. Now the data lives on your laptop and
+   nothing upstream can move it.
+3. **`pandas.read_gbq(...).to_parquet(...)`** from a Python REPL or a one-shot
+   script in `athena/scripts/` (or the equivalent scripts directory in the
+   repo you're working in). That directory is the project-blessed home for
+   ad-hoc analysis — use it.
+4. **BigTable**: dump the relevant row-key range to JSON Lines via a script
+   modelled on `athena/athena/etl/bigtable_account_events.py`. Don't debug
+   against live BigTable — checkpoint state can mask the bug.
+5. **dbt**: `dbt run --select +<model>+ --target debug` against a static
+   upstream snapshot, then `dbt show --select <model>` to inspect output.
+   Compile-only via `dbt compile --select <model>` if you only need to read
+   the rendered SQL.
+
+### Build the check
+
+The "test" is whatever returns PASS/FAIL on the **specific symptom the user
+reported** (not a similar-shaped symptom nearby).
+
+- **Wrong aggregate** → SQL `SELECT` with the expected vs actual side by side,
+  or `assert df['col'].sum() == expected` in a one-liner.
+- **Missing rows** → `SELECT key FROM expected EXCEPT DISTINCT SELECT key FROM actual`.
+- **Duplicates / row explosion** → `SELECT key, COUNT(*) FROM t GROUP BY key HAVING COUNT(*) > 1`.
+- **Wrong join cardinality** → run the join, group by the left-side PK, assert
+  count == 1 (or whatever the contract is).
+- **dbt test failure** → the failing singular test in `dbt/tests/unit/` or
+  `dbt/tests/e2e/` *is* the check. Don't write a new one until Phase 5.
+- **Temporal workflow crash** → minimal workflow input that reproduces, run via
+  `uv run python -m <project>.temporal.worker` against a debug Temporal namespace.
+- **Streamlit / Hex render bug** → headless Streamlit (`streamlit run …
+  --server.headless true`) or a Hex thread, but pin the input data first.
+
+### Iterate on the loop itself
+
+A 30-second flaky check is barely better than no check. A 2-second
+deterministic check is a debugging superpower.
+
+- **Faster.** Shrink the snapshot. One `account_id` beats a million. One day
+  beats a year. `LIMIT` aggressively.
+- **Sharper.** Assert on the *specific* wrong number, not "result is non-empty".
+- **More deterministic.** Pin time (`@frozen_time` / explicit `CURRENT_DATE`),
+  pin RNG, pin model versions, freeze the snapshot to disk.
+
+### When you genuinely cannot pin the data
+
+Stop and say so explicitly. List what you tried. Then ask the user for
+**exactly one** of:
+
+- A sanitised export of the offending slice (account_id, date range, experiment arm)
+- Read access to a non-prod replica or a BigQuery snapshot of the relevant tables
+- Permission to add temporary instrumentation to the live pipeline (`logging.info` calls
+  with `[DEBUG-xxxx]` tags — see Phase 4)
+
+Do **not** proceed to hypothesise without a loop. You'll burn the user's time
+and your context.
+
+## Phase 2 — Reproduce
+
+Run the check. Watch the bug appear. Confirm:
+
+- [ ] The check produces the failure mode the **user** described — not a
+      different failure that happens to be nearby. Wrong bug = wrong fix. A row
+      count off by 17 is not the same bug as one off by 1700; a `NULL` is not a
+      `0`; `delivered_at IS NULL` is not the same as `delivered_at` in the
+      future.
+- [ ] The failure is reproducible across multiple runs (or, for genuinely
+      non-deterministic bugs like Temporal worker races, reproducible at a high
+      enough rate to debug against — keep raising the rate until it is).
+- [ ] You have captured the exact symptom (failing query output, dbt test row
+      count, error message, slow timing) so Phase 5 can verify the fix actually
+      addresses it.
+
+Do not proceed until you reproduce.
+
+## Phase 3 — Hypothesise
+
+Generate **3–5 ranked falsifiable hypotheses** before testing any of them.
+Single-hypothesis generation anchors on the first plausible idea — usually
+wrong.
+
+Each hypothesis must make a **prediction**:
+
+> "If <X> is the cause, then <changing Y> will make the bug disappear / make it
+> worse / change the failing row count from N to M."
+
+If you can't state the prediction, the hypothesis is a vibe — sharpen or discard.
+
+### The data-pipeline usual suspects
+
+Bias your ranking toward these. They are vastly more common than novel causes.
+
+1. **Join cardinality** — silent M:M where 1:1 was assumed. Row explosion or
+   row loss. *Probe: group-by left-PK, count.*
+2. **NULL semantics** — `NULL ≠ ''`, `NULL ≠ 0`, `WHERE x != 'foo'` excludes
+   NULLs, `COUNT(col)` skips NULLs but `COUNT(*)` doesn't, `SUM` over all-NULL
+   returns NULL not 0.
+3. **Timezone / date-vs-timestamp** — UTC boundary slip, naive vs aware,
+   `DATE(timestamp)` in the wrong TZ. `assert_timing_sanity` exists in
+   `dbt/tests/unit/` *because this bites repeatedly*.
+4. **Filter / aggregation ordering** — `WHERE` before vs after `JOIN` /
+   `GROUP BY`; `HAVING` vs `WHERE`; window function evaluated before the
+   `WHERE` you thought filtered its input.
+5. **Control-group / counterfactual contamination** — control members
+   accidentally delivered to, or test members in the control measurement.
+   `assert_control_group_not_delivered` exists for this; it is currently
+   downgraded to `warn` while a suspected upstream DQ issue is investigated —
+   do not assume `warn` means "fine".
+6. **Referential integrity** — child rows whose parent doesn't exist (or no
+   longer exists). `assert_hermes_referential_integrity` is the existing
+   pattern.
+7. **BigTable extraction state** — checkpoint resumed from a stale row key,
+   partial extraction, late-arriving events with backdated timestamps that
+   landed *before* the checkpoint moved past them. See
+   `athena/athena/etl/_checkpoint.py`.
+8. **Temporal non-determinism** — workflow code reading wall-clock time, RNG,
+   external state, or iterating over an unordered map. Workflows must be
+   deterministic; activities are where side effects live.
+9. **dbt model staleness / wrong `ref()`** — model selected without its
+   upstreams (`dbt run --select model` not `+model`), stale incremental, wrong
+   `target`, env-var override pointing at the wrong dataset.
+10. **Engine semantic drift** — `DISTINCT`, `ORDER BY NULLS FIRST/LAST`,
+    division by zero, integer division, string equality with whitespace, and
+    timestamp precision differ between BigQuery, pandas, and any local
+    DuckDB-style probe you're using to sanity-check.
+11. **Schema drift upstream** — BigTable column family added/removed, source
+    PostHog action renamed, seed CSV columns reordered. Check `git log` on
+    `dbt/seeds/` and the relevant staging models.
+12. **Sample bias** — works on debug dataset because debug doesn't have the
+    edge case. Confirm the offending row exists in your snapshot.
+
+**Show the ranked list to the user before instrumenting.** They often have
+context that re-ranks instantly ("we just promoted a new champion model" /
+"marketing backfilled that source yesterday" / "there's a known TZ issue with
+the new tapped_at field"). Cheap checkpoint, big time saver.
+
+## Phase 4 — Instrument
+
+Each probe must map to a specific prediction from Phase 3. **Change one
+variable at a time.**
+
+### Tool preference for data work
+
+1. **Inspect the data first, not the code.** `df.describe()`, `df.head(20)`,
+   `SELECT * FROM t LIMIT 20`, `bq show <table>`. Most data bugs are visible
+   in 20 rows.
+2. **Cardinality probes between every transform stage.**
+   ```sql
+   SELECT key, COUNT(*) FROM stage_n GROUP BY key HAVING COUNT(*) > 1
+   ```
+3. **Diff intermediate stages.** Snapshot the output of stage N-1 and stage N
+   to Parquet. `pandas.testing.assert_frame_equal` or a SQL `EXCEPT DISTINCT`
+   in both directions. Find the *first* stage where the bug appears.
+4. **`bq query --dry_run`** for cost / bytes-scanned regressions, and
+   BigQuery's execution-details pane (or `INFORMATION_SCHEMA.JOBS`) for query
+   plan and stage timings. Measure first, fix second — never guess at perf.
+5. **dbt: `dbt show --select <model> --limit 100`**, `dbt compile --select
+   <model>` to read rendered SQL, `dbt run --select +<model>+` to rebuild with
+   upstreams.
+6. **Temporal: replay workflow history** locally against the failing workflow
+   ID. The replay test catches non-determinism the live worker missed.
+7. **`logging` (stdlib) at activity / function boundaries.** Tag every debug
+   line with a unique prefix:
+   ```python
+   logger.info("[DEBUG-a4f2] partition=%s rowcount=%d", partition, len(df))
+   ```
+   Cleanup at the end is one `grep -r "\[DEBUG-a4f2\]"`. Untagged logs
+   survive; tagged logs die.
+
+Never "log everything and grep". Targeted probes that distinguish hypotheses.
+
+## Phase 5 — Fix + regression test
+
+Write the regression test **before the fix** — but only at the **correct
+seam**.
+
+A correct seam is one where the test exercises the **real bug pattern as it
+occurs at the call site**. A unit test that mocks away the join doesn't catch
+join-cardinality bugs. A pytest that builds a tiny pandas DataFrame doesn't
+catch a BigQuery-specific NULL handling difference.
+
+### Seam menu — pick the highest-fidelity one available
+
+1. **dbt singular test in `dbt/tests/unit/` or `dbt/tests/e2e/`** — this is the
+   canonical regression-test pattern in this codebase. Six exist already
+   (`assert_timing_sanity`, `assert_hermes_referential_integrity`,
+   `assert_control_group_not_delivered`, `assert_recent_data_completeness`,
+   `assert_hermes_fallback_delivers`, `assert_asa_resolution_rate`). Add a
+   seventh. SQL that returns failing rows; zero rows = pass.
+2. **dbt generic test in `schema.yml`** — for column-level invariants
+   (`unique`, `not_null`, `accepted_values`, `relationships`). Use when the
+   invariant is single-column.
+3. **pytest under `<project>/tests/`** — for Python code paths
+   (Temporal activities, ETL transforms, ML scoring). Mirror the existing test
+   layout (`test_etl/`, `test_temporal/`, `test_models/`).
+4. **Temporal workflow replay test** — for non-determinism bugs in workflow
+   code. See `atlas/tests/test_temporal/`.
+5. **Pinned-fixture pytest** — Parquet under `tests/fixtures/`, loaded into a
+   pandas DataFrame, transformation applied, assertion checked. Use when the
+   bug is in pandas-side shaping logic.
+
+If no correct seam exists — the transform is one giant SQL with no testable
+boundary, or the bug only appears in a Temporal workflow that can't be
+isolated — **that itself is the finding.** Note it. Flag for refactor in
+Phase 6. Do not write a fake test at the wrong seam; it gives false
+confidence.
+
+If a correct seam exists:
+
+1. Turn the minimised repro into a failing test at that seam.
+2. Watch it fail.
+3. Apply the fix.
+4. Watch it pass.
+5. Re-run the Phase 1 check on the original (un-minimised) snapshot.
+
+### On test severity
+
+The existing `assert_control_group_not_delivered` is downgraded to `severity:
+warn` while the upstream DQ issue is investigated. That is the correct
+pattern when the assertion is right but the data is wrong and outside your
+control. Do **not** delete the test, do not move it to `error` and ignore CI
+failures, and do not silently `LIMIT 0` it. Downgrade with a comment that
+links to the investigation.
+
+## Phase 6 — Cleanup + post-mortem
+
+Required before declaring done:
+
+- [ ] Original snapshot check no longer reproduces (re-run Phase 1)
+- [ ] Regression test passes — `make test` (pytest), `make dbt-parse`, and the
+      relevant `dbt test --select <test_name>` all green. Or absence of seam
+      documented.
+- [ ] All `[DEBUG-...]` instrumentation removed
+      (`grep -rn "\[DEBUG-" .` returns nothing)
+- [ ] Throwaway scratch BigQuery tables deleted (`bq rm -f -t
+      <project>:<scratch_dataset>.<table>`)
+- [ ] Local Parquet snapshots either deleted or promoted to
+      `tests/fixtures/` with a comment naming the bug they pin
+- [ ] Reusable analysis scripts promoted to `<project>/scripts/` (don't leave
+      them in `~/scratch/`)
+- [ ] The hypothesis that turned out correct is stated in the commit message
+      — so the next debugger learns
+
+### Then ask: would a data-quality check at the boundary have caught this?
+
+Most data bugs are recurrences of a bug that wasn't constraint-checked at
+ingest or staging. If the answer is yes, **add the check now**:
+
+- New **dbt singular test** for cross-table invariants
+- New **dbt generic test** in the relevant `schema.yml` for column invariants
+- **`dbt source freshness`** entry if it was a staleness bug
+- **Activity-level assertion** in the Temporal workflow if it was a workflow-input bug
+
+Make the recommendation **after** the fix is in, not before — you have more
+information now than when you started.
+
+## Red flags: you're skipping investigation
+
+| Thought                                       | Reality                                       |
+| --------------------------------------------- | --------------------------------------------- |
+| "Let me just rerun the dbt model"             | Masking, not diagnosing                       |
+| "I'll add a `WHERE x IS NOT NULL` and see"    | Guessing without a hypothesis                 |
+| "The Temporal workflow probably just retried" | Workflows are deterministic; find out why     |
+| "It works in debug, must be a prod thing"     | Pin the prod data and reproduce locally       |
+| "This usually fixes it"                       | Past fixes don't explain current bugs         |
+| "I don't have time to pin the data"           | You don't have time *not* to                  |
+
+## When to question the architecture
+
+If you've attempted three or more fixes and the bug persists, or if Phase 5
+reveals there's no correct seam to lock down the bug:
+
+**Stop fixing. Question the architecture.** A bug that has no testable seam
+is a design problem, not a code problem. Use AskUserQuestion to flag it
+before continuing — the user may want to scope a refactor, or accept the bug
+with a documented workaround, or escalate.

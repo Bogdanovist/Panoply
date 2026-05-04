@@ -198,7 +198,7 @@ Create a new directory under `skill-bundles/<name>/`, drop skill subdirectories 
 | `security-review` | Security review methodology for implementation changes |
 | `skill-creator` | Create new Claude Code skills |
 | `system-feedback` | Feedback loop on the Panoply config system itself |
-| `systematic-debugging` | Root-cause investigation for failures and bugs |
+| `systematic-debugging` | Data-pipeline diagnosis loop: pin the data, then hypothesise |
 | `verification-before-completion` | Evidence-before-claims for implementation completion |
 | `xlsx` | Create/analyse spreadsheets |
 

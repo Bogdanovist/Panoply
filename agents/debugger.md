@@ -13,7 +13,7 @@ Systematically investigate errors to identify root cause before fixes.
 
 ## Skills Used
 
-- `systematic-debugging` - Four-phase investigation methodology
+- `systematic-debugging` - Six-phase data-pipeline diagnosis loop (pin data → reproduce → hypothesise → instrument → fix + regression test → cleanup)
 
 ## Mission
 
